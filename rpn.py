@@ -2,9 +2,23 @@ import operator
 import ply.lex as lex
 import ply.yacc as yacc
 
-tokens = ("NAME", "NUMBER", "REL_OP", "IF")
+tokens = (
+    "NAME",
+    "NUMBER",
+    "REL_OP",
+    "IF",
+)
 
-literals = ["=", "+", "-", "*", "/", "^", "(", ")"]
+literals = [
+    "=",
+    "+",
+    "-",
+    "*",
+    "/",
+    "^",
+    "(",
+    ")",
+]
 
 
 def t_NUMBER(t):
@@ -173,7 +187,7 @@ def p_op(p):
     elif p[1] == "*":
         method = operator.mul
     elif p[1] == "/":
-        method = operator.div
+        method = operator.truediv
     elif p[1] == "^":
         method = operator.pow
     p[0] = ("op", p[1], method)
