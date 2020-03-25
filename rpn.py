@@ -1,4 +1,5 @@
 import operator
+import sys
 import ply.lex as lex
 import ply.yacc as yacc
 
@@ -211,7 +212,8 @@ def execute(p):
         rel = rels[args[0]]
         a = execute(args[1])
         b = execute(args[2])
-        return rel(a, b)
+        if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+            return rel(a, b)
     elif fun == "if":
         cond = args[0]
         then = args[1]
@@ -253,14 +255,38 @@ def execute(p):
 
 parser = yacc.yacc()
 
-while True:
-    try:
-        s = input("> ")
-    except (KeyboardInterrupt, EOFError):
-        break
-    if not s:
-        continue
 
-    result = yacc.parse(s)
+def parse(string):
+    result = yacc.parse(string)
     if result:
-        execute(result)
+        return execute(result)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 2:
+        try:
+            data = open(sys.argv[1]).read()
+            parse(data)
+        except FileNotFoundError:
+            print(f"Unable to open file '{sys.argv[1]}'")
+    else:
+        string = ""
+        while True:
+            prompt = ". " if string else "> "
+            try:
+                s = input(prompt)
+            except (KeyboardInterrupt, EOFError):
+                break
+
+            if not s:
+                if not string:
+                    break
+                else:
+                    parse(string)
+                    string = ""
+            elif s[-1] == " ":
+                string += s[:-1]
+                continue
+            else:
+                parse(string + s)
+                string = ""
