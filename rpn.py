@@ -2,13 +2,9 @@ import operator
 import ply.lex as lex
 import ply.yacc as yacc
 
-tokens = (
-    "NAME",
-    "NUMBER",
-    "REL_OP",
-)
+tokens = ("NAME", "NUMBER", "REL_OP", "IF")
 
-literals = ["=", "+", "-", "*", "/", "^"]
+literals = ["=", "+", "-", "*", "/", "^", "(", ")"]
 
 
 def t_NUMBER(t):
@@ -19,7 +15,13 @@ def t_NUMBER(t):
     return t
 
 
-t_NAME = r"[a-zA-Z_][a-zA-Z0-9_]*"
+def t_NAME(t):
+    r"[a-zA-Z_][a-zA-Z0-9_]*"
+    if t.value == "if":
+        t.type = "IF"
+    return t
+
+
 t_REL_OP = r"<=|>=|<|>|==|!="
 t_ignore = " \t"
 
@@ -35,8 +37,41 @@ def t_error(t):
 
 
 lexer = lex.lex()
+# while True:
+#     try:
+#         s = input("calc > ")
+#     except EOFError:
+#         break
+#     if not s:
+#         continue
+
+#     lexer.input(s)
+#     while True:
+#         tok = lexer.token()
+#         if not tok:
+#             break
+#         print(tok)
+# exit(0)
+
 
 names = {}
+
+
+def p_execute(p):
+    """execute : statement"""
+    if not p[1]:
+        return
+
+    if p[1][0] == "assign":
+        names[p[1][1]] = p[1][2]
+    elif p[1][0] == "print":
+        print(p[1][1])
+
+
+def p_statement_if(p):
+    """statement : IF '(' relation ')' statement"""
+    if p[3]:
+        p[0] = p[5]
 
 
 def p_relation(p):
@@ -57,12 +92,12 @@ def p_relation(p):
 
 def p_statement_assign(p):
     """statement : NAME '=' expression"""
-    names[p[1]] = p[3]
+    p[0] = ("assign", p[1], p[3])
 
 
 def p_statement_expr(p):
     """statement : expression"""
-    print(p[1])
+    p[0] = ("print", p[1])
 
 
 def p_expression_rpn(p):
@@ -70,22 +105,20 @@ def p_expression_rpn(p):
     p[0] = p[1]
 
 
-def p_expression_name(p):
-    """expression : NAME"""
-    try:
-        p[0] = names[p[1]]
-    except LookupError:
-        print("Undefined name '%s'" % p[1])
-        p[0] = 0
-
-
 def p_rpn(p):
-    """rpn : number rpn_repeat"""
+    """rpn : number rpn_repeat
+           | name rpn_repeat"""
     program = [p[1]] + p[2]
     stack = []
     for x in program:
         if x[0] == "number":
             stack.append(x[1])
+        elif x[0] == "name":
+            try:
+                stack.append(names[x[1]])
+            except LookupError:
+                print(f"Undefined name '{x[1]}'")
+                return
         elif x[0] == "op":
             try:
                 a = stack.pop()
@@ -99,6 +132,7 @@ def p_rpn(p):
         p[0] = stack.pop()
     else:
         print("Stack is empty!")
+        return
 
     if len(stack) > 0:
         print("Unused variables left on stack:", stack)
@@ -106,6 +140,7 @@ def p_rpn(p):
 
 def p_rpn_repeat(p):
     """rpn_repeat : rpn_repeat number
+                  | rpn_repeat name
                   | rpn_repeat op
                   | """
 
@@ -118,6 +153,11 @@ def p_rpn_repeat(p):
 def p_number(p):
     """number : NUMBER"""
     p[0] = ("number", p[1])
+
+
+def p_name(p):
+    """name : NAME"""
+    p[0] = ("name", p[1])
 
 
 def p_op(p):
