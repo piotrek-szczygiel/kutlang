@@ -1,9 +1,14 @@
+import operator
 import ply.lex as lex
 import ply.yacc as yacc
 
-tokens = ("NUMBER",)
+tokens = (
+    "NAME",
+    "NUMBER",
+    "REL_OP",
+)
 
-literals = ["+", "-", "*", "/", "^"]
+literals = ["=", "+", "-", "*", "/", "^"]
 
 
 def t_NUMBER(t):
@@ -14,6 +19,8 @@ def t_NUMBER(t):
     return t
 
 
+t_NAME = r"[a-zA-Z_][a-zA-Z0-9_]*"
+t_REL_OP = r"<=|>=|<|>|==|!="
 t_ignore = " \t"
 
 
@@ -29,11 +36,72 @@ def t_error(t):
 
 lexer = lex.lex()
 
+names = {}
+
+
+def p_relation(p):
+    """relation : expression REL_OP expression"""
+    if p[2] == "<=":
+        p[0] = p[1] <= p[3]
+    elif p[2] == ">=":
+        p[0] = p[1] >= p[3]
+    elif p[2] == "<":
+        p[0] = p[1] < p[3]
+    elif p[2] == ">":
+        p[0] = p[1] > p[3]
+    elif p[2] == "==":
+        p[0] = p[1] == p[3]
+    elif p[2] == "!=":
+        p[0] = p[1] != p[3]
+
+
+def p_statement_assign(p):
+    """statement : NAME '=' expression"""
+    names[p[1]] = p[3]
+
+
+def p_statement_expr(p):
+    """statement : expression"""
+    print(p[1])
+
+
+def p_expression_rpn(p):
+    """expression : rpn"""
+    p[0] = p[1]
+
+
+def p_expression_name(p):
+    """expression : NAME"""
+    try:
+        p[0] = names[p[1]]
+    except LookupError:
+        print("Undefined name '%s'" % p[1])
+        p[0] = 0
+
 
 def p_rpn(p):
     """rpn : number rpn_repeat"""
-    p[0] = [p[1]] + p[2]
-    print(p[0])
+    program = [p[1]] + p[2]
+    stack = []
+    for x in program:
+        if x[0] == "number":
+            stack.append(x[1])
+        elif x[0] == "op":
+            try:
+                a = stack.pop()
+                b = stack.pop()
+                stack.append(x[2](a, b))
+            except IndexError:
+                print("Stack is empty!")
+                return
+
+    if stack:
+        p[0] = stack.pop()
+    else:
+        print("Stack is empty!")
+
+    if len(stack) > 0:
+        print("Unused variables left on stack:", stack)
 
 
 def p_rpn_repeat(p):
@@ -47,18 +115,28 @@ def p_rpn_repeat(p):
         p[0] = p[1] + [p[2]]
 
 
+def p_number(p):
+    """number : NUMBER"""
+    p[0] = ("number", p[1])
+
+
 def p_op(p):
     """op : '+'
           | '-'
           | '*'
           | '/'
           | '^'"""
-    p[0] = p[1]
-
-
-def p_number(p):
-    """number : NUMBER"""
-    p[0] = p[1]
+    if p[1] == "+":
+        method = operator.add
+    elif p[1] == "-":
+        method = operator.sub
+    elif p[1] == "*":
+        method = operator.mul
+    elif p[1] == "/":
+        method = operator.div
+    elif p[1] == "^":
+        method = operator.pow
+    p[0] = ("op", p[1], method)
 
 
 def p_error(p):
