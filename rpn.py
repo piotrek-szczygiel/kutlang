@@ -2,22 +2,24 @@ import operator
 import ply.lex as lex
 import ply.yacc as yacc
 
-tokens = (
-    "NAME",
-    "NUMBER",
-    "REL_OP",
+
+keywords = (
     "IF",
+    "WHILE",
+    "FOR",
+    "DEF",
+    "RUN",
 )
+
+tokens = keywords + ("NAME", "NUMBER", "OP", "REL",)
 
 literals = [
     "=",
-    "+",
-    "-",
-    "*",
-    "/",
-    "^",
     "(",
     ")",
+    ";",
+    "{",
+    "}",
 ]
 
 
@@ -31,12 +33,14 @@ def t_NUMBER(t):
 
 def t_NAME(t):
     r"[a-zA-Z_][a-zA-Z0-9_]*"
-    if t.value == "if":
-        t.type = "IF"
+    if t.value.upper() in keywords:
+        t.type = t.value.upper()
+
     return t
 
 
-t_REL_OP = r"<=|>=|<|>|==|!="
+t_REL = r"<=|>=|<|>|==|!="
+t_OP = r"\+|-|\*|/|\^"
 t_ignore = " \t"
 
 
@@ -51,57 +55,45 @@ def t_error(t):
 
 
 lexer = lex.lex()
-# while True:
-#     try:
-#         s = input("calc > ")
-#     except EOFError:
-#         break
-#     if not s:
-#         continue
-
-#     lexer.input(s)
-#     while True:
-#         tok = lexer.token()
-#         if not tok:
-#             break
-#         print(tok)
-# exit(0)
 
 
-names = {}
+def p_block(p):
+    """block : statement
+             | '{' statement ';' more_statements '}'
+       more_statements : statement
+                       | statement ';' more_statements
+                       | """
+    statements = []
+    for x in p[1:]:
+        if x in ("{", ";", "}"):
+            continue
+        statements.append(x)
+    p[0] = ("block", statements)
 
 
-def p_execute(p):
-    """execute : statement"""
-    if not p[1]:
-        return
+def p_statement_def(p):
+    """statement : DEF NAME '=' block"""
+    p[0] = ("def", p[2], p[4])
 
-    if p[1][0] == "assign":
-        names[p[1][1]] = p[1][2]
-    elif p[1][0] == "print":
-        print(p[1][1])
+
+def p_statement_run(p):
+    """statement : RUN NAME"""
+    p[0] = ("run", p[2])
+
+
+def p_statement_for(p):
+    """statement : FOR '(' statement ';' relation ';' statement ')' block"""
+    p[0] = ("for", p[3], p[5], p[7], p[9])
+
+
+def p_statement_while(p):
+    """statement : WHILE '(' relation ')' block"""
+    p[0] = ("while", p[3], p[5])
 
 
 def p_statement_if(p):
-    """statement : IF '(' relation ')' statement"""
-    if p[3]:
-        p[0] = p[5]
-
-
-def p_relation(p):
-    """relation : expression REL_OP expression"""
-    if p[2] == "<=":
-        p[0] = p[1] <= p[3]
-    elif p[2] == ">=":
-        p[0] = p[1] >= p[3]
-    elif p[2] == "<":
-        p[0] = p[1] < p[3]
-    elif p[2] == ">":
-        p[0] = p[1] > p[3]
-    elif p[2] == "==":
-        p[0] = p[1] == p[3]
-    elif p[2] == "!=":
-        p[0] = p[1] != p[3]
+    """statement : IF '(' relation ')' block"""
+    p[0] = ("if", p[3], p[5])
 
 
 def p_statement_assign(p):
@@ -109,56 +101,33 @@ def p_statement_assign(p):
     p[0] = ("assign", p[1], p[3])
 
 
-def p_statement_expr(p):
+def p_statement_print(p):
     """statement : expression"""
     p[0] = ("print", p[1])
 
 
-def p_expression_rpn(p):
-    """expression : rpn"""
-    p[0] = p[1]
+def p_relation(p):
+    """relation : expression rel expression"""
+    p[0] = ("relation", p[2], p[1], p[3])
+
+
+def p_expression(p):
+    """expression : name
+                  | number
+                  | name rpn
+                  | number rpn"""
+    e = [p[1]]
+    if len(p) == 3:
+        e += p[2]
+    p[0] = ("expr", e)
 
 
 def p_rpn(p):
-    """rpn : number rpn_repeat
-           | name rpn_repeat"""
-    program = [p[1]] + p[2]
-    stack = []
-    for x in program:
-        if x[0] == "number":
-            stack.append(x[1])
-        elif x[0] == "name":
-            try:
-                stack.append(names[x[1]])
-            except LookupError:
-                print(f"Undefined name '{x[1]}'")
-                return
-        elif x[0] == "op":
-            try:
-                a = stack.pop()
-                b = stack.pop()
-                stack.append(x[2](a, b))
-            except IndexError:
-                print("Stack is empty!")
-                return
-
-    if stack:
-        p[0] = stack.pop()
-    else:
-        print("Stack is empty!")
-        return
-
-    if len(stack) > 0:
-        print("Unused variables left on stack:", stack)
-
-
-def p_rpn_repeat(p):
-    """rpn_repeat : rpn_repeat number
-                  | rpn_repeat name
-                  | rpn_repeat op
-                  | """
-
-    if len(p) == 1:  # epsilon
+    """rpn : rpn number
+           | rpn name
+           | rpn op
+           | """
+    if len(p) == 1:
         p[0] = []
     elif len(p) == 3:
         p[0] = p[1] + [p[2]]
@@ -174,23 +143,14 @@ def p_name(p):
     p[0] = ("name", p[1])
 
 
+def p_rel(p):
+    """rel : REL"""
+    p[0] = p[1]
+
+
 def p_op(p):
-    """op : '+'
-          | '-'
-          | '*'
-          | '/'
-          | '^'"""
-    if p[1] == "+":
-        method = operator.add
-    elif p[1] == "-":
-        method = operator.sub
-    elif p[1] == "*":
-        method = operator.mul
-    elif p[1] == "/":
-        method = operator.truediv
-    elif p[1] == "^":
-        method = operator.pow
-    p[0] = ("op", p[1], method)
+    """op : OP"""
+    p[0] = ("op", p[1])
 
 
 def p_error(p):
@@ -198,6 +158,97 @@ def p_error(p):
         print("Syntax error at '%s'" % p.value)
     else:
         print("Syntax error at EOF")
+
+
+names = {}
+funs = {}
+
+ops = {
+    "+": operator.add,
+    "-": operator.sub,
+    "*": operator.mul,
+    "/": operator.truediv,
+    "^": operator.pow,
+}
+rels = {
+    "<=": operator.le,
+    ">=": operator.ge,
+    "<": operator.lt,
+    ">": operator.gt,
+    "==": operator.eq,
+    "!=": operator.ne,
+}
+
+
+def execute(p):
+    fun = p[0]
+    args = p[1:]
+
+    if fun == "block":
+        for stmt in args[0]:
+            execute(stmt)
+    elif fun == "print":
+        result = execute(args[0])
+        if result:
+            print(result)
+    elif fun == "assign":
+        name = args[0]
+        result = execute(args[1])
+        names[name] = result
+    elif fun == "def":
+        name = args[0]
+        block = args[1]
+        funs[name] = block
+    elif fun == "run":
+        name = args[0]
+        try:
+            block = funs[name]
+        except LookupError:
+            print(f"Undefined function: '{name}'")
+            return
+        return execute(block)
+    elif fun == "relation":
+        rel = rels[args[0]]
+        a = execute(args[1])
+        b = execute(args[2])
+        return rel(a, b)
+    elif fun == "if":
+        cond = args[0]
+        then = args[1]
+        if execute(cond):
+            execute(then)
+    elif fun == "while":
+        cond = args[0]
+        then = args[1]
+        while execute(cond):
+            execute(then)
+    elif fun == "for":
+        start = args[0]
+        cond = args[1]
+        step = args[2]
+        then = args[3]
+        execute(start)
+        while execute(cond):
+            execute(then)
+            execute(step)
+    elif fun == "expr":
+        stack = []
+        for x in args[0]:
+            if x[0] == "number":
+                stack.append(x[1])
+            elif x[0] == "name":
+                try:
+                    stack.append(names[x[1]])
+                except LookupError:
+                    print(f"Undefined name '{x[1]}'")
+                    return
+            elif x[0] == "op":
+                stack.append(ops[x[1]](stack.pop(), stack.pop()))
+
+        if len(stack) == 1:
+            return stack.pop()
+        else:
+            print(f"Invalid stack state: {stack}")
 
 
 parser = yacc.yacc()
@@ -209,4 +260,7 @@ while True:
         break
     if not s:
         continue
-    yacc.parse(s)
+
+    result = yacc.parse(s)
+    if result:
+        execute(result)
