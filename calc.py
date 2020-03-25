@@ -1,5 +1,4 @@
 import math
-import sys
 import ply.lex as lex
 import ply.yacc as yacc
 
@@ -11,12 +10,14 @@ tokens = (
 )
 
 
-literals = ["=", "+", "-", "*", "/", "^", "(", ")", ";"]
+literals = ["=", "+", "-", "*", "/", "(", ")", ";"]
 
 
 def t_NUMBER(t):
     r"\d+\.\d+|\d+\.|\.\d+|\d+"
     t.value = float(t.value)
+    if t.value % 1 == 0:
+        t.value = int(t.value)
     return t
 
 
@@ -76,6 +77,7 @@ def p_program(p):
     """program : statement ';'
                | statement
                | statement ';' program"""
+    pass
 
 
 def p_statement_assign(p):
@@ -85,8 +87,7 @@ def p_statement_assign(p):
 
 def p_statement_expr(p):
     """statement : expression"""
-    trim = int(p[1])
-    print(trim if trim == p[1] else p[1])
+    print(p[1])
 
 
 def p_expression_function(p):
@@ -148,7 +149,7 @@ parser = yacc.yacc()
 while True:
     try:
         s = input("> ")
-    except EOFError:
+    except (KeyboardInterrupt, EOFError):
         break
     if not s:
         continue
