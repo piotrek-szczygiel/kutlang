@@ -11,7 +11,7 @@ tokens = (
 )
 
 
-literals = ["=", "+", "-", "*", "/", "^", "(", ")"]
+literals = ["=", "+", "-", "*", "/", "^", "(", ")", ";"]
 
 
 def t_NUMBER(t):
@@ -72,21 +72,25 @@ precedence = (
 names = {}
 
 
+def p_program(p):
+    """program : statement ';'
+               | statement
+               | statement ';' program"""
+
+
 def p_statement_assign(p):
-    'statement : NAME "=" expression'
+    """statement : NAME '=' expression"""
     names[p[1]] = p[3]
 
 
 def p_statement_expr(p):
-    "statement : expression"
-    # Don't print decimal places if there's no need
-    if int(p[1]) == p[1]:
-        p[1] = int(p[1])
-    print(p[1])
+    """statement : expression"""
+    trim = int(p[1])
+    print(trim if trim == p[1] else p[1])
 
 
 def p_expression_function(p):
-    "expression : FUNCTION expression"
+    """expression : FUNCTION expression"""
     p[0] = p[1][1](p[2])
 
 
@@ -143,7 +147,7 @@ parser = yacc.yacc()
 
 while True:
     try:
-        s = input("calc > ")
+        s = input("> ")
     except EOFError:
         break
     if not s:
