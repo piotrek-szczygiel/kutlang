@@ -1,5 +1,2 @@
 __pycache__/
 .venv/
-calc-parser.egg-info/
-parser.out
-parsetab.py
