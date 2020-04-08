@@ -1,5 +1,5 @@
 import operator
-from rply import LexerGenerator, ParserGenerator, ParsingError
+from rply import LexerGenerator, ParserGenerator, LexingError, ParsingError
 
 lg = LexerGenerator()
 
@@ -57,7 +57,7 @@ add_token("PRINT", r"print")
 lexer = lg.build()
 
 
-class ParsingSyntaxError(Exception):
+class CustomParsingError(Exception):
     def __init__(self, message):
         self.message = message
 
@@ -106,9 +106,9 @@ class BinaryOp(AstNode):
         if not isinstance(left, type(right)):
             ltype = self.left.__class__.__name__
             rtype = self.right.__class__.__name__
-            raise ParsingSyntaxError(f"Type mismatch between {ltype} and {rtype}")
+            raise CustomParsingError(f"Type mismatch between {ltype} and {rtype}")
         elif isinstance(left, String) and self.op is not operator.add:
-            raise ParsingSyntaxError("Invalid string operation")
+            raise CustomParsingError("Invalid string operation")
         else:
             return self.op(left, right)
 
@@ -179,7 +179,7 @@ def program(p):
 
 @pg.production("statements : statements statement")
 def statements(p):
-    return Block(p[0].getastlist() + [p[1]])
+    return Block(p[0].statements + [p[1]])
 
 
 @pg.production("statements : statement")
@@ -193,7 +193,7 @@ def statement_expression(p):
     return Statement(p[0])
 
 
-@pg.production("statement : PRINT LPAREN expression RPAREN")
+@pg.production("expression : PRINT LPAREN expression RPAREN")
 def statement_print(p):
     return Print(p[2])
 
@@ -249,7 +249,7 @@ def expression_binop(p):
 
 @pg.error
 def error_handler(token):
-    raise ParsingSyntaxError(f"Unexpected token: {token.gettokentype()}")
+    raise CustomParsingError(f"Unexpected token: {token.gettokentype()}")
 
 
 parser = pg.build()
@@ -257,8 +257,11 @@ parser = pg.build()
 while True:
     s = input("> ")
     lexing_result = lexer.lex(s)
-    parsing_result = parser.parse(lexing_result)
     try:
+        parsing_result = parser.parse(lexing_result)
         parsing_result.eval()
-    except ParsingSyntaxError as err:
+    except CustomParsingError as err:
         print(err)
+    except LexingError as err:
+        loc = err.getsourcepos()
+        print(f"Syntax error at {loc.idx}")
