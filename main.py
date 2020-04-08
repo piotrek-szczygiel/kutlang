@@ -21,9 +21,9 @@ add_token("RPAREN", r"\)")
 # add_token("RBRACE", r"\}")
 # add_token("DEFINE_ASSIGN", r":=")
 # add_token("RETURNS_ARROW", r"->")
-# add_token("COMMA", r",")
+add_token("COMMA", r",")
 # add_token("COLON", r":")
-# add_token("SEMICOLON", r";")
+add_token("SEMICOLON", r";")
 # add_token("EQUAL", r"==")
 # add_token("ASSIGN", r"=")
 # add_token("LOWER_EQUAL", r"<=")
@@ -39,7 +39,7 @@ add_token("POW", r"\^")
 
 add_token("NUMBER_FLOAT", r"\d+\.\d+|\d+\.|\.\d+")
 add_token("NUMBER_INT", r"\d+")
-add_token("STRING", r"\"(.*?)\"")
+add_token("STRING_LITERAL", r"\"(.*?)\"")
 
 # add_token("IF", r"if")
 # add_token("ELSE", r"else")
@@ -47,8 +47,11 @@ add_token("STRING", r"\"(.*?)\"")
 # add_token("FOR", r"for")
 # add_token("WHILE", r"while")
 # add_token("RETURN", r"return")
-# add_token("CAST", r"cast")
-# add_token("PRINT", r"print")
+add_token("INT", r"int")
+add_token("FLOAT", r"float")
+add_token("STRING", r"string")
+add_token("CAST", r"cast")
+add_token("PRINT", r"print")
 # add_token("IDENTIFIER", r"[a-zA-Z_][a-zA-Z0-9_]*")
 
 lexer = lg.build()
@@ -110,6 +113,55 @@ class BinaryOp(AstNode):
             return self.op(left, right)
 
 
+class Program(AstNode):
+    def __init__(self, statements):
+        self.statements = statements
+
+    def eval(self):
+        self.statements.eval()
+
+
+class Block(AstNode):
+    def __init__(self, statements):
+        self.statements = statements
+
+    def eval(self):
+        for statement in self.statements:
+            statement.eval()
+
+
+class Statement(AstNode):
+    def __init__(self, statement):
+        self.statement = statement
+
+    def eval(self):
+        self.statement.eval()
+
+
+class Print(AstNode):
+    def __init__(self, value):
+        self.value = value
+
+    def eval(self):
+        print(self.value.eval())
+
+
+class Cast(AstNode):
+    def __init__(self, type, value):
+        self.type = type
+        self.value = value
+
+    def eval(self):
+        type = self.type.gettokentype()
+        assert type in ("INT", "FLOAT", "STRING")
+        if type == "INT":
+            return int(self.value.eval())
+        elif type == "FLOAT":
+            return float(self.value.eval())
+        elif type == "STRING":
+            return str(self.value.eval())
+
+
 pg = ParserGenerator(
     tokens,
     precedence=[
@@ -118,6 +170,39 @@ pg = ParserGenerator(
         ("right", ["POW"]),
     ],
 )
+
+
+@pg.production("program : statements")
+def program(p):
+    return Program(p[0])
+
+
+@pg.production("statements : statements statement")
+def statements(p):
+    return Block(p[0].getastlist() + [p[1]])
+
+
+@pg.production("statements : statement")
+def statements_statement(p):
+    return Block([p[0]])
+
+
+@pg.production("statement : expression SEMICOLON")
+@pg.production("statement : expression")
+def statement_expression(p):
+    return Statement(p[0])
+
+
+@pg.production("statement : PRINT LPAREN expression RPAREN")
+def statement_print(p):
+    return Print(p[2])
+
+
+@pg.production("expression : CAST LPAREN INT COMMA expression RPAREN")
+@pg.production("expression : CAST LPAREN FLOAT COMMA expression RPAREN")
+@pg.production("expression : CAST LPAREN STRING COMMA expression RPAREN")
+def expression_cast(p):
+    return Cast(p[2], p[4])
 
 
 @pg.production("expression : NUMBER_INT")
@@ -130,7 +215,7 @@ def expression_number_float(p):
     return NumberFloat(float(p[0].getstr()))
 
 
-@pg.production("expression : STRING")
+@pg.production("expression : STRING_LITERAL")
 def expression_string(p):
     return String(p[0].getstr())
 
@@ -149,6 +234,7 @@ def expression_binop(p):
     left = p[0]
     right = p[2]
     op = p[1].gettokentype()
+    assert op in ("PLUS", "MINUS", "MUL", "DIV", "POW")
     if op == "PLUS":
         return BinaryOp(operator.add, left, right)
     elif op == "MINUS":
@@ -159,8 +245,6 @@ def expression_binop(p):
         return BinaryOp(operator.truediv, left, right)
     elif op == "POW":
         return BinaryOp(operator.pow, left, right)
-    else:
-        raise AssertionError("Unknown binary operator")
 
 
 @pg.error
@@ -175,7 +259,6 @@ while True:
     lexing_result = lexer.lex(s)
     parsing_result = parser.parse(lexing_result)
     try:
-        eval_result = parsing_result.eval()
-        print(eval_result)
+        parsing_result.eval()
     except ParsingSyntaxError as err:
         print(err)
