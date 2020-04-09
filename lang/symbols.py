@@ -1,6 +1,8 @@
 class Symbols:
     def __init__(self):
         self.symbols = {}
+        self.returnable = False
+        self.breakable = False
 
     def add(self, name, value):
         self.symbols[name] = value

@@ -19,8 +19,11 @@ class BlockScoped(Node):
     def __init__(self, block):
         self.block = block
 
-    def eval(self, scope):
+    def eval(self, scope, args={}):
         scope.push()
+        scope.set_breakable()
+        for name, value in args.items():
+            scope.add(name, value)
         value = self.block.eval(scope)
         scope.pop()
         return value
@@ -43,6 +46,16 @@ class Statement(Node):
 
     def eval(self, scope):
         return self.stmt.eval(scope)
+
+
+class Fn(Node):
+    def __init__(self, symbol, args, block):
+        self.symbol = symbol
+        self.args = args
+        self.block = block
+
+    def eval(self, scope):
+        scope.add(self.symbol, (self.args, self.block))
 
 
 class Define(Node):
@@ -118,6 +131,21 @@ class ValueSymbol(Node):
 
     def eval(self, scope):
         return scope.get(self.symbol)
+
+
+class Type(Node):
+    def __init__(self, type):
+        types = {
+            "INT": int,
+            "FLOAT": float,
+            "STR": str,
+            "BOOL": bool,
+        }
+
+        self.type = types[type]
+
+    def eval(self, scope):
+        return self.type
 
 
 class BinaryOp(Node):
@@ -221,11 +249,30 @@ class Cast(Node):
         self.value = value
 
     def eval(self, scope):
-        type = self.type.gettokentype()
-        assert type in ("INT", "FLOAT", "STRING")
-        if type == "INT":
-            return int(self.value.eval(scope))
-        elif type == "FLOAT":
-            return float(self.value.eval(scope))
-        elif type == "STRING":
-            return str(self.value.eval(scope))
+        cast = self.type.eval(scope)
+        return cast(self.value.eval(scope))
+
+
+class Call(Node):
+    def __init__(self, symbol, args):
+        self.symbol = symbol
+        self.args = args
+
+    def eval(self, scope):
+        types, fn = scope.get(self.symbol)
+        if len(self.args) != len(types):
+            raise ValueError(f"Invalid number of arguments passed to '{self.symbol}'")
+
+        args = {}
+        for i in range(len(types)):
+            value = self.args[i].eval(scope)
+            name, type = types[i]
+            type = type.eval(scope)
+            if not isinstance(value, type):
+                ltype = value.__class__.__name__
+                rtype = type.__name__
+                raise ValueError(f"Argument type mismatch between {ltype} and {rtype}")
+            args[name] = value
+
+        scope = Scope()
+        return fn.eval(scope, args)

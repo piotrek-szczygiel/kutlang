@@ -25,6 +25,7 @@ class Parser:
                 ("left", ["MUL", "DIV", "MOD"]),
                 ("right", ["MINUS"]),
                 ("right", ["POW"]),
+                ("nonassoc", ["LPAREN", "RPAREN"]),
             ],
             cache_id="lang",
         )
@@ -45,6 +46,26 @@ class Parser:
         def block_stmt(p):
             return ast.Block([p[0]])
 
+        @pg.production("stmt : FN SYMBOL LPAREN def_args RPAREN scope")
+        def stmt_fn(p):
+            return ast.Fn(p[1].getstr(), p[3], p[5])
+
+        @pg.production("def_args : def_args COMMA def_arg")
+        def def_args(p):
+            return p[0] + [p[2]]
+
+        @pg.production("def_args : def_arg")
+        def def_args_arg(p):
+            return [p[0]]
+
+        @pg.production("def_args :")
+        def def_args_empty(p):
+            return []
+
+        @pg.production("def_arg : SYMBOL COLON type")
+        def def_arg(p):
+            return (p[0].getstr(), p[2])
+
         @pg.production("stmt : SYMBOL DEFINE expr")
         def stmt_define(p):
             return ast.Define(p[0].getstr(), p[2])
@@ -64,6 +85,22 @@ class Parser:
         @pg.production("stmt : expr")
         def stmt_expr(p):
             return ast.Statement(p[0])
+
+        @pg.production("expr : SYMBOL LPAREN args RPAREN")
+        def expr_call(p):
+            return ast.Call(p[0].getstr(), p[2])
+
+        @pg.production("args : args COMMA expr")
+        def args(p):
+            return p[0] + [p[2]]
+
+        @pg.production("args : expr")
+        def args_expr(p):
+            return [p[0]]
+
+        @pg.production("args :")
+        def args_empty(p):
+            return []
 
         @pg.production("expr : IF expr scope ELSE scope")
         def expr_if_else(p):
@@ -93,11 +130,16 @@ class Parser:
         def expr_symbol(p):
             return ast.ValueSymbol(p[0].getstr())
 
-        @pg.production("expr : CAST LPAREN INT COMMA expr RPAREN")
-        @pg.production("expr : CAST LPAREN FLOAT COMMA expr RPAREN")
-        @pg.production("expr : CAST LPAREN STRING COMMA expr RPAREN")
+        @pg.production("expr : CAST LPAREN type COMMA expr RPAREN")
         def expr_cast(p):
             return ast.Cast(p[2], p[4])
+
+        @pg.production("type : INT")
+        @pg.production("type : FLOAT")
+        @pg.production("type : STR")
+        @pg.production("type : BOOL")
+        def expr_type(p):
+            return ast.Type(p[0].gettokentype())
 
         @pg.production("expr : VALUE_INT")
         def expr_number_int(p):
@@ -107,8 +149,8 @@ class Parser:
         def expr_number_float(p):
             return ast.ValueFloat(float(p[0].getstr()))
 
-        @pg.production("expr : VALUE_STRING")
-        def expr_string(p):
+        @pg.production("expr : VALUE_STR")
+        def expr_str(p):
             return ast.ValueString(p[0].getstr())
 
         @pg.production("expr : TRUE")

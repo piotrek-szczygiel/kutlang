@@ -33,3 +33,15 @@ class Scope:
 
     def pop(self):
         self.symbols_stack.popleft()
+
+    def set_returnable(self):
+        self.symbols_stack[0].returnable = True
+
+    def set_breakable(self):
+        self.symbols_stack[0].breakable = True
+
+    def is_returnable(self):
+        return self.symbols_stack[0].returnable
+
+    def is_breakable(self):
+        return self.symbols_stack[0].breakable

@@ -1,0 +1,33 @@
+fn sqr(x: int) { x ^ 2 }
+fn pow(x: int, n: int) { x ^ n }
+fn pi() { 3.1415926 }
+
+fn hello(name: str) {
+    println("Hello " + name + "!")
+
+    result := 0
+    while result < 1337 { result = result + 1 }
+    result
+}
+
+fn fib() {
+    a := 1
+    b := 0
+
+    for i := 0; i < 15; i = i + 1 {
+        temp := a
+        a = a + b
+        b = temp
+
+        println(a)
+    }
+}
+
+println("13^2 = " + cast(str, sqr(13)))
+println("6^9 = " + cast(str, pow(6, 9)))
+println("PI = " + cast(str, pi()))
+
+result := hello("World")
+println(result)
+
+fib()
