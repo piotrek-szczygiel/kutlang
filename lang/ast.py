@@ -6,38 +6,38 @@ class Node:
 
 
 class Program(Node):
-    def __init__(self, statements):
-        self.statements = statements
+    def __init__(self, block):
+        self.block = block
 
     def eval(self, ctx):
-        return self.statements.eval(ctx)
+        return self.block.eval(ctx)
 
 
 class Scope(Node):
-    def __init__(self, statements):
-        self.statements = statements
+    def __init__(self, block):
+        self.block = block
 
     def eval(self, ctx):
-        return self.statements.eval(ctx)
+        return self.block.eval(ctx)
 
 
-class Statements(Node):
-    def __init__(self, statements):
-        self.statements = statements
+class Block(Node):
+    def __init__(self, block):
+        self.block = block
 
     def eval(self, ctx):
         value = None
-        for statement in self.statements:
-            value = statement.eval(ctx)
+        for stmt in self.block:
+            value = stmt.eval(ctx)
         return value
 
 
 class Statement(Node):
-    def __init__(self, statement):
-        self.statement = statement
+    def __init__(self, stmt):
+        self.stmt = stmt
 
     def eval(self, ctx):
-        return self.statement.eval(ctx)
+        return self.stmt.eval(ctx)
 
 
 class Define(Node):
@@ -132,26 +132,54 @@ class BinaryOp(Node):
 
 
 class If(Node):
-    def __init__(self, condition, value):
-        self.condition = condition
-        self.value = value
+    def __init__(self, cond, block):
+        self.cond = cond
+        self.block = block
 
     def eval(self, ctx):
-        if self.condition.eval(ctx):
-            return self.value.eval(ctx)
+        if self.cond.eval(ctx):
+            return self.block.eval(ctx)
 
 
 class IfElse(Node):
-    def __init__(self, condition, true_value, false_value):
-        self.condition = condition
-        self.true_value = true_value
-        self.false_value = false_value
+    def __init__(self, cond, true_block, false_block):
+        self.cond = cond
+        self.true_block = true_block
+        self.false_block = false_block
 
     def eval(self, ctx):
-        if self.condition.eval(ctx):
-            return self.true_value.eval(ctx)
+        if self.cond.eval(ctx):
+            return self.true_block.eval(ctx)
         else:
-            return self.false_value.eval(ctx)
+            return self.false_block.eval(ctx)
+
+
+class While(Node):
+    def __init__(self, cond, block):
+        self.cond = cond
+        self.block = block
+
+    def eval(self, ctx):
+        value = None
+        while self.cond.eval(ctx):
+            value = self.block.eval(ctx)
+        return value
+
+
+class For(Node):
+    def __init__(self, begin, cond, step, block):
+        self.begin = begin
+        self.cond = cond
+        self.step = step
+        self.block = block
+
+    def eval(self, ctx):
+        self.begin.eval(ctx)
+        value = None
+        while self.cond.eval(ctx):
+            value = self.block.eval(ctx)
+            self.step.eval(ctx)
+        return value
 
 
 class Cast(Node):

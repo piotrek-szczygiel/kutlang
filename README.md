@@ -1,5 +1,3 @@
-# orchlang
-
 ## Requirements
 
 ```bash
@@ -15,5 +13,5 @@ python main.py
 ## Running script
 
 ```bash
-python main.py example.kut
+python main.py examples/fizzbuzz.kut
 ```
