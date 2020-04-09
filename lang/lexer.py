@@ -52,6 +52,7 @@ class Lexer:
             ("FLOAT", r"float"),
             ("STRING", r"string"),
             ("CAST", r"cast"),
+            ("PRINTLN", r"println"),
             ("PRINT", r"print"),
             ("SYMBOL", r"[a-zA-Z_][a-zA-Z0-9_]*"),
         ]

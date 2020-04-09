@@ -32,9 +32,13 @@ class Parser:
         def program(p):
             return ast.Program(p[0])
 
-        @pg.production("block : block SC stmt")
+        @pg.production("scope : LBRACE block RBRACE")
+        def scope(p):
+            return ast.BlockScoped(p[1])
+
+        @pg.production("block : block stmt")
         def block(p):
-            return ast.Block(p[0].block + [p[2]])
+            return ast.Block(p[0].block + [p[1]])
 
         @pg.production("block : stmt")
         def block_stmt(p):
@@ -48,29 +52,33 @@ class Parser:
         def stmt_assign(p):
             return ast.Assign(p[0].getstr(), p[2])
 
+        @pg.production("stmt : PRINTLN LPAREN expr RPAREN")
         @pg.production("stmt : PRINT LPAREN expr RPAREN")
         def stmt_print(p):
-            return ast.Print(p[2])
+            if p[0].gettokentype() == "PRINTLN":
+                return ast.Print(p[2], True)
+            elif p[0].gettokentype() == "PRINT":
+                return ast.Print(p[2], False)
 
         @pg.production("stmt : expr")
         def stmt_expr(p):
             return ast.Statement(p[0])
 
-        @pg.production("expr : IF expr LBRACE block RBRACE ELSE LBRACE block RBRACE")
+        @pg.production("expr : IF expr scope ELSE scope")
         def expr_if_else(p):
-            return ast.IfElse(p[1], p[3], p[7])
+            return ast.IfElse(p[1], p[2], p[4])
 
-        @pg.production("expr : IF expr LBRACE block RBRACE")
+        @pg.production("expr : IF expr scope")
         def expr_if(p):
-            return ast.If(p[1], p[3])
+            return ast.If(p[1], p[2])
 
-        @pg.production("expr : WHILE expr LBRACE block RBRACE")
+        @pg.production("expr : WHILE expr scope")
         def expr_while(p):
-            return ast.While(p[1], p[3])
+            return ast.While(p[1], p[2])
 
-        @pg.production("expr : FOR stmt SC expr SC stmt LBRACE block RBRACE")
+        @pg.production("expr : FOR stmt SC expr SC stmt scope")
         def expr_for(p):
-            return ast.For(p[1], p[3], p[5], p[7])
+            return ast.For(p[1], p[3], p[5], p[6])
 
         @pg.production("expr : SYMBOL")
         def expr_symbol(p):

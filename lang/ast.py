@@ -1,5 +1,7 @@
 import operator
 
+from lang.scope import Scope
+
 
 class Node:
     pass
@@ -9,26 +11,29 @@ class Program(Node):
     def __init__(self, block):
         self.block = block
 
-    def eval(self, ctx):
-        return self.block.eval(ctx)
+    def eval(self, scope):
+        return self.block.eval(scope)
 
 
-class Scope(Node):
+class BlockScoped(Node):
     def __init__(self, block):
         self.block = block
 
-    def eval(self, ctx):
-        return self.block.eval(ctx)
+    def eval(self, scope):
+        scope.push()
+        value = self.block.eval(scope)
+        scope.pop()
+        return value
 
 
 class Block(Node):
     def __init__(self, block):
         self.block = block
 
-    def eval(self, ctx):
+    def eval(self, scope):
         value = None
         for stmt in self.block:
-            value = stmt.eval(ctx)
+            value = stmt.eval(scope)
         return value
 
 
@@ -36,8 +41,8 @@ class Statement(Node):
     def __init__(self, stmt):
         self.stmt = stmt
 
-    def eval(self, ctx):
-        return self.stmt.eval(ctx)
+    def eval(self, scope):
+        return self.stmt.eval(scope)
 
 
 class Define(Node):
@@ -45,8 +50,8 @@ class Define(Node):
         self.symbol = symbol
         self.value = value
 
-    def eval(self, ctx):
-        ctx.symbol_define(self.symbol, self.value.eval(ctx))
+    def eval(self, scope):
+        scope.add(self.symbol, self.value.eval(scope))
         return None
 
 
@@ -55,17 +60,21 @@ class Assign(Node):
         self.symbol = symbol
         self.value = value
 
-    def eval(self, ctx):
-        ctx.symbol_assign(self.symbol, self.value.eval(ctx))
+    def eval(self, scope):
+        scope.set(self.symbol, self.value.eval(scope))
         return None
 
 
 class Print(Node):
-    def __init__(self, value):
+    def __init__(self, value, newline):
         self.value = value
+        self.newline = newline
 
-    def eval(self, ctx):
-        print(self.value.eval(ctx))
+    def eval(self, scope):
+        if self.newline:
+            print(self.value.eval(scope))
+        else:
+            print(self.value.eval(scope), end="")
         return None
 
 
@@ -73,7 +82,7 @@ class ValueInt(Node):
     def __init__(self, value):
         self.value = value
 
-    def eval(self, ctx):
+    def eval(self, scope):
         return self.value
 
 
@@ -81,7 +90,7 @@ class ValueFloat(Node):
     def __init__(self, value):
         self.value = value
 
-    def eval(self, ctx):
+    def eval(self, scope):
         return self.value
 
 
@@ -89,17 +98,17 @@ class ValueString(Node):
     def __init__(self, value):
         self.value = value[1:-1]
 
-    def eval(self, ctx):
+    def eval(self, scope):
         return self.value
 
 
 class ValueTrue(Node):
-    def eval(self, ctx):
+    def eval(self, scope):
         return True
 
 
 class ValueFalse(Node):
-    def eval(self, ctx):
+    def eval(self, scope):
         return False
 
 
@@ -107,8 +116,8 @@ class ValueSymbol(Node):
     def __init__(self, symbol):
         self.symbol = symbol
 
-    def eval(self, ctx):
-        return ctx.symbol_get(self.symbol)
+    def eval(self, scope):
+        return scope.get(self.symbol)
 
 
 class BinaryOp(Node):
@@ -117,9 +126,9 @@ class BinaryOp(Node):
         self.left = left
         self.right = right
 
-    def eval(self, ctx):
-        left = self.left.eval(ctx)
-        right = self.right.eval(ctx)
+    def eval(self, scope):
+        left = self.left.eval(scope)
+        right = self.right.eval(scope)
 
         if not isinstance(left, type(right)):
             ltype = self.left.__class__.__name__
@@ -136,9 +145,9 @@ class If(Node):
         self.cond = cond
         self.block = block
 
-    def eval(self, ctx):
-        if self.cond.eval(ctx):
-            return self.block.eval(ctx)
+    def eval(self, scope):
+        if self.cond.eval(scope):
+            return self.block.eval(scope)
 
 
 class IfElse(Node):
@@ -147,11 +156,11 @@ class IfElse(Node):
         self.true_block = true_block
         self.false_block = false_block
 
-    def eval(self, ctx):
-        if self.cond.eval(ctx):
-            return self.true_block.eval(ctx)
+    def eval(self, scope):
+        if self.cond.eval(scope):
+            return self.true_block.eval(scope)
         else:
-            return self.false_block.eval(ctx)
+            return self.false_block.eval(scope)
 
 
 class While(Node):
@@ -159,10 +168,10 @@ class While(Node):
         self.cond = cond
         self.block = block
 
-    def eval(self, ctx):
+    def eval(self, scope):
         value = None
-        while self.cond.eval(ctx):
-            value = self.block.eval(ctx)
+        while self.cond.eval(scope):
+            value = self.block.eval(scope)
         return value
 
 
@@ -173,12 +182,12 @@ class For(Node):
         self.step = step
         self.block = block
 
-    def eval(self, ctx):
-        self.begin.eval(ctx)
+    def eval(self, scope):
+        self.begin.eval(scope)
         value = None
-        while self.cond.eval(ctx):
-            value = self.block.eval(ctx)
-            self.step.eval(ctx)
+        while self.cond.eval(scope):
+            value = self.block.eval(scope)
+            self.step.eval(scope)
         return value
 
 
@@ -187,12 +196,12 @@ class Cast(Node):
         self.type = type
         self.value = value
 
-    def eval(self, ctx):
+    def eval(self, scope):
         type = self.type.gettokentype()
         assert type in ("INT", "FLOAT", "STRING")
         if type == "INT":
-            return int(self.value.eval(ctx))
+            return int(self.value.eval(scope))
         elif type == "FLOAT":
-            return float(self.value.eval(ctx))
+            return float(self.value.eval(scope))
         elif type == "STRING":
-            return str(self.value.eval(ctx))
+            return str(self.value.eval(scope))

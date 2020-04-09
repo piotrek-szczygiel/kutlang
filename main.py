@@ -4,18 +4,18 @@ from rply import LexingError, ParsingError
 
 from lang.lexer import Lexer
 from lang.parser import Parser
-from lang.context import Context
+from lang.scope import Scope
 
 lexer = Lexer()
 parser = Parser(lexer.tokens)
-ctx = Context()
+scope = Scope()
 
 
-def execute(ctx, source):
+def execute(scope, source):
     try:
         tokens = lexer.lex(source)
         ast = parser.parse(tokens)
-        return ast.eval(ctx)
+        return ast.eval(scope)
     except ValueError as err:
         print(err)
     except LexingError as err:
@@ -23,14 +23,14 @@ def execute(ctx, source):
         print(f"{pos.lineno}:{pos.colno} Lexing error")
     except ParsingError as err:
         pos = err.getsourcepos()
-        print(f"{pos.lineno}:{pos.colno} Prasing error")
+        print(f"{pos.lineno}:{pos.colno} Parsing error")
 
 
 def repl():
     while True:
         try:
             source = input("> ")
-            result = execute(ctx, source)
+            result = execute(scope, source)
             if result is not None:
                 print(result)
         except KeyboardInterrupt:
@@ -40,7 +40,7 @@ def repl():
 def file(path):
     with open(path, "r") as f:
         source = f.read()
-        execute(ctx, source)
+        execute(scope, source)
 
 
 if __name__ == "__main__":

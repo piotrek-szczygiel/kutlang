@@ -1,0 +1,16 @@
+a := "hello"
+
+println(a)
+
+once := true
+while once {
+
+    println(a)
+
+    a := "shadow"
+    println(a)
+
+    once = false
+}
+
+println(a)
