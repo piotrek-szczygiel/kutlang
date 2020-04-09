@@ -191,6 +191,30 @@ class For(Node):
         return value
 
 
+class Minus(Node):
+    def __init__(self, value):
+        self.value = value
+
+    def eval(self, scope):
+        value = self.value.eval(scope)
+        if not isinstance(value, int) and not isinstance(value, float):
+            type = value.__class__.__name__
+            raise ValueError(f"Cannot negate {type}")
+        return value * -1
+
+
+class Not(Node):
+    def __init__(self, value):
+        self.value = value
+
+    def eval(self, scope):
+        value = self.value.eval(scope)
+        if not isinstance(value, bool):
+            type = value.__class__.__name__
+            raise ValueError(f"Cannot negate {type}")
+        return not value
+
+
 class Cast(Node):
     def __init__(self, type, value):
         self.type = type

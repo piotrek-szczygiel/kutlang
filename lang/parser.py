@@ -23,6 +23,7 @@ class Parser:
                 ("left", ["EQ", "NE", "LE", "GE", "LT", "GT"]),
                 ("left", ["ADD", "SUB"]),
                 ("left", ["MUL", "DIV", "MOD"]),
+                ("right", ["MINUS"]),
                 ("right", ["POW"]),
             ],
             cache_id="lang",
@@ -79,6 +80,14 @@ class Parser:
         @pg.production("expr : FOR stmt SC expr SC stmt scope")
         def expr_for(p):
             return ast.For(p[1], p[3], p[5], p[6])
+
+        @pg.production("expr : MINUS expr")
+        def expr_minus(p):
+            return ast.Minus(p[1])
+
+        @pg.production("expr : NOT expr")
+        def expr_not(p):
+            return ast.Not(p[1])
 
         @pg.production("expr : SYMBOL")
         def expr_symbol(p):

@@ -2,15 +2,15 @@ a := "hello"
 
 println(a)
 
-once := true
-while once {
+once := false
+while !once {
 
     println(a)
 
-    a := "shadow"
+    a := "shadowed"
     println(a)
 
-    once = false
+    once = true
 }
 
 println(a)
