@@ -21,15 +21,16 @@ class Parser:
                 ("left", ["MUL", "DIV"]),
                 ("right", ["POW"]),
             ],
+            cache_id="lang",
         )
 
         @pg.production("program : statements")
         def program(p):
             return ast.Program(p[0])
 
-        @pg.production("statements : statements statement")
+        @pg.production("statements : statements SEMICOLON statement")
         def statements(p):
-            return ast.Statements(p[0].statements + [p[1]])
+            return ast.Statements(p[0].statements + [p[2]])
 
         @pg.production("statements : statement")
         def statements_statement(p):
@@ -51,9 +52,15 @@ class Parser:
         def statement_expression(p):
             return ast.Statement(p[0])
 
-        @pg.production("expression : LBRACE statements RBRACE")
-        def expression_scope(p):
-            return ast.Scope(p[1])
+        @pg.production(
+            "expression : IF expression LBRACE statements RBRACE ELSE LBRACE statements RBRACE"
+        )
+        def expression_if_else(p):
+            return ast.IfElse(p[1], p[3], p[7])
+
+        @pg.production("expression : IF expression LBRACE statements RBRACE")
+        def expression_if(p):
+            return ast.If(p[1], p[3])
 
         @pg.production("expression : SYMBOL")
         def expression_symbol(p):
@@ -76,6 +83,14 @@ class Parser:
         @pg.production("expression : VALUE_STRING")
         def expression_string(p):
             return ast.ValueString(p[0].getstr())
+
+        @pg.production("expression : TRUE")
+        def expression_true(p):
+            return ast.ValueTrue()
+
+        @pg.production("expression : FALSE")
+        def expression_false(p):
+            return ast.ValueFalse()
 
         @pg.production("expression : LPAREN expression RPAREN")
         def expression_parens(p):

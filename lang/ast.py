@@ -93,6 +93,16 @@ class ValueString(Node):
         return self.value
 
 
+class ValueTrue(Node):
+    def eval(self, ctx):
+        return True
+
+
+class ValueFalse(Node):
+    def eval(self, ctx):
+        return False
+
+
 class ValueSymbol(Node):
     def __init__(self, symbol):
         self.symbol = symbol
@@ -119,6 +129,29 @@ class BinaryOp(Node):
             raise ValueError("Invalid string operation")
         else:
             return self.op(left, right)
+
+
+class If(Node):
+    def __init__(self, condition, value):
+        self.condition = condition
+        self.value = value
+
+    def eval(self, ctx):
+        if self.condition.eval(ctx):
+            return self.value.eval(ctx)
+
+
+class IfElse(Node):
+    def __init__(self, condition, true_value, false_value):
+        self.condition = condition
+        self.true_value = true_value
+        self.false_value = false_value
+
+    def eval(self, ctx):
+        if self.condition.eval(ctx):
+            return self.true_value.eval(ctx)
+        else:
+            return self.false_value.eval(ctx)
 
 
 class Cast(Node):

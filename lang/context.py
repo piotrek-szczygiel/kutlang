@@ -10,6 +10,11 @@ class Context:
     def symbol_assign(self, name, value):
         if name not in self.symbols:
             raise ValueError(f"Undefined identifier '{name}'")
+        symbol = self.symbols[name]
+        if not isinstance(symbol, type(value)):
+            ltype = symbol.__class__.__name__
+            rtype = value.__class__.__name__
+            raise ValueError(f"Cannot assign {rtype} to variable of type {ltype}")
         self.symbols[name] = value
 
     def symbol_get(self, name):
