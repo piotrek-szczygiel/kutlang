@@ -29,20 +29,35 @@ class Parser:
 
         @pg.production("statements : statements statement")
         def statements(p):
-            return ast.Block(p[0].statements + [p[1]])
+            return ast.Statements(p[0].statements + [p[1]])
 
         @pg.production("statements : statement")
         def statements_statement(p):
-            return ast.Block([p[0]])
+            return ast.Statements([p[0]])
 
-        @pg.production("statement : expression SEMICOLON")
+        @pg.production("statement : SYMBOL DEFINE expression")
+        def statement_define(p):
+            return ast.Define(p[0].getstr(), p[2])
+
+        @pg.production("statement : SYMBOL ASSIGN expression")
+        def statement_assign(p):
+            return ast.Assign(p[0].getstr(), p[2])
+
+        @pg.production("statement : PRINT LPAREN expression RPAREN")
+        def statement_print(p):
+            return ast.Print(p[2])
+
         @pg.production("statement : expression")
         def statement_expression(p):
             return ast.Statement(p[0])
 
-        @pg.production("expression : PRINT LPAREN expression RPAREN")
-        def statement_print(p):
-            return ast.Print(p[2])
+        @pg.production("expression : LBRACE statements RBRACE")
+        def expression_scope(p):
+            return ast.Scope(p[1])
+
+        @pg.production("expression : SYMBOL")
+        def expression_symbol(p):
+            return ast.ValueSymbol(p[0].getstr())
 
         @pg.production("expression : CAST LPAREN INT COMMA expression RPAREN")
         @pg.production("expression : CAST LPAREN FLOAT COMMA expression RPAREN")

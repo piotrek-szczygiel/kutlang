@@ -16,15 +16,15 @@ class Lexer:
         tokens = [
             ("LPAREN", r"\("),
             ("RPAREN", r"\)"),
-            # ("LBRACE", r"\{"),
-            # ("RBRACE", r"\}"),
-            # ("DEFINE_ASSIGN", r":="),
+            ("LBRACE", r"\{"),
+            ("RBRACE", r"\}"),
+            ("DEFINE", r":="),
             # ("RETURNS_ARROW", r"->"),
             ("COMMA", r","),
             # ("COLON", r":"),
-            ("SEMICOLON", r";"),
+            # ("SEMICOLON", r";"),
             # ("EQUAL", r"=="),
-            # ("ASSIGN", r"="),
+            ("ASSIGN", r"="),
             # ("LOWER_EQUAL", r"<="),
             # ("GREATER_EQUAL", r">="),
             # ("LOWER", r"<"),
@@ -48,7 +48,7 @@ class Lexer:
             ("STRING", r"string"),
             ("CAST", r"cast"),
             ("PRINT", r"print"),
-            # ("IDENTIFIER", r"[a-zA-Z_][a-zA-Z0-9_]*"),
+            ("SYMBOL", r"[a-zA-Z_][a-zA-Z0-9_]*"),
         ]
 
         token_names = []
