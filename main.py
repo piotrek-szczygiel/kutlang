@@ -1,5 +1,7 @@
+import argparse
 import sys
 
+from graphviz import Digraph
 from rply import LexingError, ParsingError
 
 from lang.lexer import Lexer
@@ -11,11 +13,18 @@ parser = Parser(lexer.tokens)
 scope = Scope()
 
 
-def execute(scope, source):
+def execute(scope, source, draw=False):
     try:
         tokens = lexer.lex(source)
         ast = parser.parse(tokens)
-        return ast.eval(scope)
+        value = ast.eval(scope)
+
+        if draw:
+            g = Digraph()
+            ast.draw(g)
+            g.render("ast", format="png", view=True, cleanup=True)
+
+        return value
     except ValueError as err:
         print(err)
     except LexingError as err:
@@ -26,27 +35,32 @@ def execute(scope, source):
         print(f"{pos.lineno}:{pos.colno} Parsing error")
 
 
-def repl():
+def run_repl(draw=False):
     while True:
         try:
             source = input("> ")
-            result = execute(scope, source)
+            result = execute(scope, source, draw)
             if result is not None:
                 print(result)
         except KeyboardInterrupt:
             break
 
 
-def file(path):
+def run_file(path, draw):
     with open(path, "r") as f:
         source = f.read()
-        execute(scope, source)
+        execute(scope, source, draw)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        repl()
-    elif len(sys.argv) == 2:
-        file(sys.argv[1])
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("file", nargs="?", help="path to script")
+    arg_parser.add_argument(
+        "-a", "--ast", help="draw abstract syntax tree", action="store_true"
+    )
+    args = arg_parser.parse_args()
+
+    if args.file:
+        run_file(args.file, args.ast)
     else:
-        print(f"Usage: {sys.argv[0]} [file]")
+        run_repl(args.ast)

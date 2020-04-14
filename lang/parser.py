@@ -46,25 +46,25 @@ class Parser:
         def block_stmt(p):
             return ast.Block([p[0]])
 
-        @pg.production("stmt : FN SYMBOL LPAREN def_args RPAREN scope")
+        @pg.production("stmt : FN SYMBOL LPAREN fn_args RPAREN scope")
         def stmt_fn(p):
             return ast.Fn(p[1].getstr(), p[3], p[5])
 
-        @pg.production("def_args : def_args COMMA def_arg")
-        def def_args(p):
-            return p[0] + [p[2]]
+        @pg.production("fn_args : fn_args COMMA def_arg")
+        def fn_args(p):
+            return ast.FnArgs(p[0].args + [p[2]])
 
-        @pg.production("def_args : def_arg")
+        @pg.production("fn_args : def_arg")
         def def_args_arg(p):
-            return [p[0]]
+            return ast.FnArgs([p[0]])
 
-        @pg.production("def_args :")
+        @pg.production("fn_args :")
         def def_args_empty(p):
-            return []
+            return ast.FnArgs([])
 
         @pg.production("def_arg : SYMBOL COLON type")
         def def_arg(p):
-            return (p[0].getstr(), p[2])
+            return ast.FnArg(p[0].getstr(), p[2])
 
         @pg.production("stmt : SYMBOL DEFINE expr")
         def stmt_define(p):
@@ -92,15 +92,15 @@ class Parser:
 
         @pg.production("args : args COMMA expr")
         def args(p):
-            return p[0] + [p[2]]
+            return ast.Args(p[0].args + [p[2]])
 
         @pg.production("args : expr")
         def args_expr(p):
-            return [p[0]]
+            return ast.Args([p[0]])
 
         @pg.production("args :")
         def args_empty(p):
-            return []
+            return ast.Args([])
 
         @pg.production("expr : IF expr scope ELSE scope")
         def expr_if_else(p):
@@ -151,7 +151,7 @@ class Parser:
 
         @pg.production("expr : VALUE_STR")
         def expr_str(p):
-            return ast.ValueString(p[0].getstr())
+            return ast.ValueStr(p[0].getstr())
 
         @pg.production("expr : TRUE")
         def expr_true(p):

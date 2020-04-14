@@ -4,7 +4,8 @@ from lang.scope import Scope
 
 
 class Node:
-    pass
+    def id(self):
+        return str(hash(self))
 
 
 class Program(Node):
@@ -14,6 +15,11 @@ class Program(Node):
     def eval(self, scope):
         return self.block.eval(scope)
 
+    def draw(self, g):
+        g.node(self.id(), "Program")
+        g.edge(self.id(), self.block.draw(g))
+        return self.id()
+
 
 class BlockScoped(Node):
     def __init__(self, block):
@@ -21,12 +27,16 @@ class BlockScoped(Node):
 
     def eval(self, scope, args={}):
         scope.push()
-        scope.set_breakable()
         for name, value in args.items():
             scope.add(name, value)
         value = self.block.eval(scope)
         scope.pop()
         return value
+
+    def draw(self, g):
+        g.node(self.id(), "BlockScoped")
+        g.edge(self.id(), self.block.draw(g))
+        return self.id()
 
 
 class Block(Node):
@@ -39,6 +49,12 @@ class Block(Node):
             value = stmt.eval(scope)
         return value
 
+    def draw(self, g):
+        g.node(self.id(), "Block")
+        for stmt in self.block:
+            g.edge(self.id(), stmt.draw(g))
+        return self.id()
+
 
 class Statement(Node):
     def __init__(self, stmt):
@@ -46,6 +62,11 @@ class Statement(Node):
 
     def eval(self, scope):
         return self.stmt.eval(scope)
+
+    def draw(self, g):
+        g.node(self.id(), "Statement")
+        g.edge(self.id(), self.stmt.draw(g))
+        return self.id()
 
 
 class Fn(Node):
@@ -57,6 +78,43 @@ class Fn(Node):
     def eval(self, scope):
         scope.add(self.symbol, (self.args, self.block))
 
+    def draw(self, g):
+        g.node(self.id(), "Define Fn: " + self.symbol)
+        g.edge(self.id(), self.args.draw(g), "Args")
+        g.edge(self.id(), self.block.draw(g), "Block")
+        return self.id()
+
+
+class FnArg(Node):
+    def __init__(self, symbol, type):
+        self.symbol = symbol
+        self.type = type
+
+    def eval(self, scope):
+        return self.symbol, self.type
+
+    def draw(self, g):
+        g.node(self.id(), "Arg: " + self.symbol)
+        g.edge(self.id(), self.type.draw(g), "Type")
+        return self.id()
+
+
+class FnArgs(Node):
+    def __init__(self, args):
+        self.args = args
+
+    def eval(self, scope):
+        args = []
+        for a in self.args:
+            args.append(a.eval(scope))
+        return args
+
+    def draw(self, g):
+        g.node(self.id(), "FnArgs")
+        for a in self.args:
+            g.edge(self.id(), a.draw(g))
+        return self.id()
+
 
 class Define(Node):
     def __init__(self, symbol, value):
@@ -67,6 +125,11 @@ class Define(Node):
         scope.add(self.symbol, self.value.eval(scope))
         return None
 
+    def draw(self, g):
+        g.node(self.id(), "Define: " + self.symbol)
+        g.edge(self.id(), self.value.draw(g))
+        return self.id()
+
 
 class Assign(Node):
     def __init__(self, symbol, value):
@@ -76,6 +139,11 @@ class Assign(Node):
     def eval(self, scope):
         scope.set(self.symbol, self.value.eval(scope))
         return None
+
+    def draw(self, g):
+        g.node(self.id(), "Assign: " + self.symbol)
+        g.edge(self.id(), self.value.draw(g))
+        return self.id()
 
 
 class Print(Node):
@@ -90,6 +158,12 @@ class Print(Node):
             print(self.value.eval(scope), end="")
         return None
 
+    def draw(self, g):
+        newline = "ln" if self.newline else ""
+        g.node(self.id(), "Print" + newline)
+        g.edge(self.id(), self.value.draw(g))
+        return self.id()
+
 
 class ValueInt(Node):
     def __init__(self, value):
@@ -97,6 +171,10 @@ class ValueInt(Node):
 
     def eval(self, scope):
         return self.value
+
+    def draw(self, g):
+        g.node(self.id(), "ValueInt: " + str(self.value))
+        return self.id()
 
 
 class ValueFloat(Node):
@@ -106,23 +184,39 @@ class ValueFloat(Node):
     def eval(self, scope):
         return self.value
 
+    def draw(self, g):
+        g.node(self.id(), "ValueFloat: " + str(self.value))
+        return self.id()
 
-class ValueString(Node):
+
+class ValueStr(Node):
     def __init__(self, value):
         self.value = value[1:-1]
 
     def eval(self, scope):
         return self.value
 
+    def draw(self, g):
+        g.node(self.id(), "ValueStr: " + self.value)
+        return self.id()
+
 
 class ValueTrue(Node):
     def eval(self, scope):
         return True
 
+    def draw(self, g):
+        g.node(self.id(), "ValueTrue")
+        return self.id()
+
 
 class ValueFalse(Node):
     def eval(self, scope):
         return False
+
+    def draw(self, g):
+        g.node(self.id(), "ValueFalse")
+        return self.id()
 
 
 class ValueSymbol(Node):
@@ -131,6 +225,10 @@ class ValueSymbol(Node):
 
     def eval(self, scope):
         return scope.get(self.symbol)
+
+    def draw(self, g):
+        g.node(self.id(), "ValueSymbol: " + self.symbol)
+        return self.id()
 
 
 class Type(Node):
@@ -147,6 +245,10 @@ class Type(Node):
     def eval(self, scope):
         return self.type
 
+    def draw(self, g):
+        g.node(self.id(), "Type: " + self.type.__name__)
+        return self.id()
+
 
 class BinaryOp(Node):
     def __init__(self, op, left, right):
@@ -162,10 +264,16 @@ class BinaryOp(Node):
             ltype = self.left.__class__.__name__
             rtype = self.right.__class__.__name__
             raise ValueError(f"Type mismatch between {ltype} and {rtype}")
-        elif isinstance(left, ValueString) and self.op is not operator.add:
+        elif isinstance(left, ValueStr) and self.op is not operator.add:
             raise ValueError("Invalid string operation")
         else:
             return self.op(left, right)
+
+    def draw(self, g):
+        g.node(self.id(), "BinaryOp: " + self.op.__name__)
+        g.edge(self.id(), self.left.draw(g), "Left")
+        g.edge(self.id(), self.right.draw(g), "Right")
+        return self.id()
 
 
 class If(Node):
@@ -176,6 +284,12 @@ class If(Node):
     def eval(self, scope):
         if self.cond.eval(scope):
             return self.block.eval(scope)
+
+    def draw(self, g):
+        g.node(self.id(), "If")
+        g.edge(self.id(), self.cond.draw(g), "Condition")
+        g.edge(self.id(), self.block.draw(g), "Consequence")
+        return self.id()
 
 
 class IfElse(Node):
@@ -190,6 +304,13 @@ class IfElse(Node):
         else:
             return self.false_block.eval(scope)
 
+    def draw(self, g):
+        g.node(self.id(), "IfElse")
+        g.edge(self.id(), self.cond.draw(g), "Condition")
+        g.edge(self.id(), self.true_block.draw(g), "Consequence")
+        g.edge(self.id(), self.false_block.draw(g), "Alternative")
+        return self.id()
+
 
 class While(Node):
     def __init__(self, cond, block):
@@ -201,6 +322,12 @@ class While(Node):
         while self.cond.eval(scope):
             value = self.block.eval(scope)
         return value
+
+    def draw(self, g):
+        g.node(self.id(), "While")
+        g.edge(self.id(), self.cond.draw(g), "Condition")
+        g.edge(self.id(), self.block.draw(g), "Consequence")
+        return self.id()
 
 
 class For(Node):
@@ -218,6 +345,14 @@ class For(Node):
             self.step.eval(scope)
         return value
 
+    def draw(self, g):
+        g.node(self.id(), "For")
+        g.edge(self.id(), self.begin.draw(g), "Begin")
+        g.edge(self.id(), self.cond.draw(g), "Condition")
+        g.edge(self.id(), self.step.draw(g), "Step")
+        g.edge(self.id(), self.block.draw(g), "Consequnce")
+        return self.id()
+
 
 class Minus(Node):
     def __init__(self, value):
@@ -229,6 +364,11 @@ class Minus(Node):
             type = value.__class__.__name__
             raise ValueError(f"Cannot negate {type}")
         return value * -1
+
+    def draw(self, g):
+        g.node(self.id(), "Unary minus")
+        g.edge(self.id(), self.value.draw(g))
+        return self.id()
 
 
 class Not(Node):
@@ -242,6 +382,11 @@ class Not(Node):
             raise ValueError(f"Cannot negate {type}")
         return not value
 
+    def draw(self, g):
+        g.node(self.id(), "Negate")
+        g.edge(self.id(), self.value.draw(g))
+        return self.id()
+
 
 class Cast(Node):
     def __init__(self, type, value):
@@ -252,6 +397,29 @@ class Cast(Node):
         cast = self.type.eval(scope)
         return cast(self.value.eval(scope))
 
+    def draw(self, g):
+        g.node(self.id(), "Cast")
+        g.edge(self.id(), self.type.draw(g), "Type")
+        g.edge(self.id(), self.value.draw(g), "Value")
+        return self.id()
+
+
+class Args(Node):
+    def __init__(self, args):
+        self.args = args
+
+    def eval(self, scope):
+        args = []
+        for a in self.args:
+            args.append(a.eval(scope))
+        return args
+
+    def draw(self, g):
+        g.node(self.id(), "Args")
+        for a in self.args:
+            g.edge(self.id(), a.draw(g))
+        return self.id()
+
 
 class Call(Node):
     def __init__(self, symbol, args):
@@ -259,13 +427,15 @@ class Call(Node):
         self.args = args
 
     def eval(self, scope):
+        evaled = self.args.eval(scope)
         types, fn = scope.get(self.symbol)
-        if len(self.args) != len(types):
+        types = types.eval(scope)
+        if len(evaled) != len(types):
             raise ValueError(f"Invalid number of arguments passed to '{self.symbol}'")
 
         args = {}
         for i in range(len(types)):
-            value = self.args[i].eval(scope)
+            value = evaled[i]
             name, type = types[i]
             type = type.eval(scope)
             if not isinstance(value, type):
@@ -276,3 +446,8 @@ class Call(Node):
 
         scope = Scope()
         return fn.eval(scope, args)
+
+    def draw(self, g):
+        g.node(self.id(), "Call: " + self.symbol)
+        g.edge(self.id(), self.args.draw(g), "Args")
+        return self.id()
