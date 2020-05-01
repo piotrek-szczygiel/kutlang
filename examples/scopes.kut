@@ -2,15 +2,9 @@ a := "hello"
 
 println(a)
 
-once := false
-while !once {
-
-    println(a)
-
+{
     a := "shadowed"
     println(a)
-
-    once = true
 }
 
 println(a)

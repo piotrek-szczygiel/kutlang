@@ -86,6 +86,10 @@ class Parser:
         def stmt_expr(p):
             return ast.Statement(p[0])
 
+        @pg.production("expr : scope")
+        def expr_scope(p):
+            return p[0]
+
         @pg.production("expr : SYMBOL LPAREN args RPAREN")
         def expr_call(p):
             return ast.Call(p[0].getstr(), p[2])
