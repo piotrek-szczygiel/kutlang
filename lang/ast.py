@@ -264,6 +264,10 @@ class BinaryOp(Node):
         right = self.right.eval(scope)
 
         if not isinstance(left, type(right)):
+            if isinstance(left, int) and isinstance(right, float):
+                return self.op(float(left), right)
+            elif isinstance(left, float) and isinstance(right, int):
+                return self.op(left, float(right))
             ltype = self.left.__class__.__name__
             rtype = self.right.__class__.__name__
             raise ValueError(f"Type mismatch between {ltype} and {rtype}")

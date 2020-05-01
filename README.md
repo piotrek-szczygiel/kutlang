@@ -7,8 +7,8 @@
 
 ```bash
 $ python main.py
-> 12 + cast(int, 3.5 * 5.)
-29
+> 12 + 3.5 * 5.
+29.5
 ```
 
 ## Running script
