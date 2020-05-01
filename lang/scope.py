@@ -19,6 +19,7 @@ class Scope:
             if symbols.contains(name):
                 symbols.set(name, value)
                 found = True
+                break
         if not found:
             raise ValueError(f"Undefined identifier '{name}'")
 

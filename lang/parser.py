@@ -38,6 +38,10 @@ class Parser:
         def scope(p):
             return ast.BlockScoped(p[1])
 
+        @pg.production("scope : LBRACE RBRACE")
+        def scope_empty(p):
+            return ast.BlockScoped(None)
+
         @pg.production("block : block stmt")
         def block(p):
             return ast.Block(p[0].block + [p[1]])

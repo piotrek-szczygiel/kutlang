@@ -26,6 +26,8 @@ class BlockScoped(Node):
         self.block = block
 
     def eval(self, scope, args={}):
+        if self.block is None:
+            return None
         scope.push()
         for name, value in args.items():
             scope.add(name, value)
@@ -35,7 +37,8 @@ class BlockScoped(Node):
 
     def draw(self, g):
         g.node(self.id(), "BlockScoped")
-        g.edge(self.id(), self.block.draw(g))
+        if self.block is not None:
+            g.edge(self.id(), self.block.draw(g))
         return self.id()
 
 
@@ -282,8 +285,12 @@ class If(Node):
         self.block = block
 
     def eval(self, scope):
+        scope.push()
+        value = None
         if self.cond.eval(scope):
-            return self.block.eval(scope)
+            value = self.block.eval(scope)
+        scope.pop()
+        return value
 
     def draw(self, g):
         g.node(self.id(), "If")
@@ -299,10 +306,14 @@ class IfElse(Node):
         self.false_block = false_block
 
     def eval(self, scope):
+        scope.push()
+        value = None
         if self.cond.eval(scope):
-            return self.true_block.eval(scope)
+            value =  self.true_block.eval(scope)
         else:
-            return self.false_block.eval(scope)
+            value =  self.false_block.eval(scope)
+        scope.pop()
+        return value
 
     def draw(self, g):
         g.node(self.id(), "IfElse")
@@ -318,9 +329,11 @@ class While(Node):
         self.block = block
 
     def eval(self, scope):
+        scope.push()
         value = None
         while self.cond.eval(scope):
             value = self.block.eval(scope)
+        scope.pop()
         return value
 
     def draw(self, g):
@@ -338,11 +351,13 @@ class For(Node):
         self.block = block
 
     def eval(self, scope):
+        scope.push()
         self.begin.eval(scope)
         value = None
         while self.cond.eval(scope):
             value = self.block.eval(scope)
             self.step.eval(scope)
+        scope.pop()
         return value
 
     def draw(self, g):
