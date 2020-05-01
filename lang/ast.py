@@ -309,9 +309,9 @@ class IfElse(Node):
         scope.push()
         value = None
         if self.cond.eval(scope):
-            value =  self.true_block.eval(scope)
+            value = self.true_block.eval(scope)
         else:
-            value =  self.false_block.eval(scope)
+            value = self.false_block.eval(scope)
         scope.pop()
         return value
 
@@ -451,13 +451,9 @@ class Call(Node):
         args = {}
         for i in range(len(types)):
             value = evaled[i]
-            name, type = types[i]
-            type = type.eval(scope)
-            if not isinstance(value, type):
-                ltype = value.__class__.__name__
-                rtype = type.__name__
-                raise ValueError(f"Argument type mismatch between {ltype} and {rtype}")
-            args[name] = value
+            name, expected_type = types[i]
+            expected_type = expected_type.eval(scope)
+            args[name] = expected_type(value)
 
         scope = Scope()
         return fn.eval(scope, args)

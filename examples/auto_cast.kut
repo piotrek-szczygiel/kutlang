@@ -1,0 +1,11 @@
+fn hello(who: str) {
+    println("Hello " + who + "!")
+}
+
+hello("world")
+hello(123)
+
+fn add(a: float, b: float) { a + b }
+println(add(1, 2))
+println(add(10.0, "2" + "2"))
+println(add(1, "xd"))
