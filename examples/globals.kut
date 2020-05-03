@@ -1,0 +1,9 @@
+global := 123
+
+fn test() {
+    println(global)
+}
+
+{
+    test()
+}

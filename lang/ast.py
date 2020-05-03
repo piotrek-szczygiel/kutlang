@@ -459,8 +459,7 @@ class Call(Node):
             expected_type = expected_type.eval(scope)
             args[name] = expected_type(value)
 
-        scope = Scope()
-        return fn.eval(scope, args)
+        return fn.eval(scope.globals(), args)
 
     def draw(self, g):
         g.node(self.id(), "Call: " + self.symbol)

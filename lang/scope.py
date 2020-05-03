@@ -34,3 +34,8 @@ class Scope:
 
     def pop(self):
         self.symbols_stack.popleft()
+
+    def globals(self):
+        g = Scope()
+        g.symbols_stack = deque([self.symbols_stack[-1]])
+        return g
