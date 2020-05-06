@@ -18,12 +18,16 @@ def execute(scope, source, draw=False):
         tokens = lexer.lex(source)
         ast = parser.parse(tokens)
 
+        # Optimize
+        ast.eval(True, scope)
+
         if draw:
             g = Digraph()
             ast.draw(g)
             g.render("ast", format="png", view=True, cleanup=True)
 
-        return ast.eval(scope)
+        # Evaluate
+        return ast.eval(False, scope)
     except ValueError as err:
         print(err)
     except LexingError as err:

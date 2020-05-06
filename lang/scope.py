@@ -1,21 +1,26 @@
 class Symbols:
     def __init__(self):
         self.symbols = {}
+        self.used = {}
         self.returnable = False
         self.breakable = False
 
     def add(self, name, value):
         self.symbols[name] = value
+        self.used[name] = False
 
     def set(self, name, value):
         symbol = self.symbols[name]
         if not isinstance(symbol, type(value)):
             ltype = symbol.__class__.__name__
             rtype = value.__class__.__name__
-            raise ValueError(f"Cannot assign {rtype} to variable of type {ltype}")
+            raise ValueError(
+                f"Cannot assign {name} of type {rtype} to variable of type {ltype}"
+            )
         self.symbols[name] = value
 
     def get(self, name):
+        self.used[name] = True
         return self.symbols[name]
 
     def contains(self, name):
@@ -52,4 +57,4 @@ class Scope:
         self.symbols_stack.insert(0, Symbols())
 
     def pop(self):
-        self.symbols_stack.pop(0)
+        return self.symbols_stack.pop(0)

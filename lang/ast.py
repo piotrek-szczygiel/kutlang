@@ -12,8 +12,8 @@ class Program(Node):
     def __init__(self, block):
         self.block = block
 
-    def eval(self, scope):
-        return self.block.eval(scope)
+    def eval(self, opt, scope):
+        return self.block.eval(opt, scope)
 
     def draw(self, g):
         g.node(self.id(), "Program")
@@ -25,7 +25,7 @@ class Block(Node):
     def __init__(self, block):
         self.block = block
 
-    def eval(self, scope, args={}):
+    def eval(self, opt, scope, args={}):
         if self.block is None:
             return None
         scope.push()
@@ -33,8 +33,23 @@ class Block(Node):
             scope.add(name, value)
         value = None
         for stmt in self.block:
-            value = stmt.eval(scope)
-        scope.pop()
+            value = stmt.eval(opt, scope)
+        symbols = scope.pop()
+
+        if opt:
+            unused = []
+            for sym, used in symbols.used.items():
+                if not used:
+                    unused.append(sym)
+            to_remove = []
+            for stmt in self.block:
+                if isinstance(stmt, (Define, Fn)) and stmt.symbol in unused:
+                    to_remove.append(stmt)
+            if to_remove:
+                print(f"Removing {len(to_remove)} unused definitions")
+            for r in to_remove:
+                self.block.remove(r)
+
         return value
 
     def draw(self, g):
@@ -49,8 +64,8 @@ class Statement(Node):
     def __init__(self, stmt):
         self.stmt = stmt
 
-    def eval(self, scope):
-        return self.stmt.eval(scope)
+    def eval(self, opt, scope):
+        return self.stmt.eval(opt, scope)
 
     def draw(self, g):
         g.node(self.id(), "Statement")
@@ -65,7 +80,7 @@ class Fn(Node):
         self.block = block
         self.scope = Scope()
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         self.scope.symbols_stack = scope.symbols_stack[:]
         scope.add(self.symbol, self)
 
@@ -81,7 +96,7 @@ class FnArg(Node):
         self.symbol = symbol
         self.type = type
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         return self.symbol, self.type
 
     def draw(self, g):
@@ -94,10 +109,10 @@ class FnArgs(Node):
     def __init__(self, args):
         self.args = args
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         args = []
         for a in self.args:
-            args.append(a.eval(scope))
+            args.append(a.eval(opt, scope))
         return args
 
     def draw(self, g):
@@ -112,8 +127,8 @@ class Define(Node):
         self.symbol = symbol
         self.value = value
 
-    def eval(self, scope):
-        scope.add(self.symbol, self.value.eval(scope))
+    def eval(self, opt, scope):
+        scope.add(self.symbol, self.value.eval(opt, scope))
         return None
 
     def draw(self, g):
@@ -127,8 +142,8 @@ class Assign(Node):
         self.symbol = symbol
         self.value = value
 
-    def eval(self, scope):
-        scope.set(self.symbol, self.value.eval(scope))
+    def eval(self, opt, scope):
+        scope.set(self.symbol, self.value.eval(opt, scope))
         return None
 
     def draw(self, g):
@@ -142,11 +157,14 @@ class Print(Node):
         self.value = value
         self.newline = newline
 
-    def eval(self, scope):
-        if self.newline:
-            print(self.value.eval(scope))
+    def eval(self, opt, scope):
+        if opt:
+            self.value.eval(opt, scope)
         else:
-            print(self.value.eval(scope), end="")
+            if self.newline:
+                print(self.value.eval(opt, scope))
+            else:
+                print(self.value.eval(opt, scope), end="")
         return None
 
     def draw(self, g):
@@ -160,7 +178,7 @@ class ValueInt(Node):
     def __init__(self, value):
         self.value = value
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         return self.value
 
     def draw(self, g):
@@ -172,7 +190,7 @@ class ValueFloat(Node):
     def __init__(self, value):
         self.value = value
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         return self.value
 
     def draw(self, g):
@@ -184,7 +202,7 @@ class ValueStr(Node):
     def __init__(self, value):
         self.value = value[1:-1]
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         return self.value
 
     def draw(self, g):
@@ -193,7 +211,7 @@ class ValueStr(Node):
 
 
 class ValueTrue(Node):
-    def eval(self, scope):
+    def eval(self, opt, scope):
         return True
 
     def draw(self, g):
@@ -202,7 +220,7 @@ class ValueTrue(Node):
 
 
 class ValueFalse(Node):
-    def eval(self, scope):
+    def eval(self, opt, scope):
         return False
 
     def draw(self, g):
@@ -214,7 +232,7 @@ class ValueSymbol(Node):
     def __init__(self, symbol):
         self.symbol = symbol
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         return scope.get(self.symbol)
 
     def draw(self, g):
@@ -233,7 +251,7 @@ class Type(Node):
 
         self.type = types[type]
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         return self.type
 
     def draw(self, g):
@@ -247,9 +265,9 @@ class BinaryOp(Node):
         self.left = left
         self.right = right
 
-    def eval(self, scope):
-        left = self.left.eval(scope)
-        right = self.right.eval(scope)
+    def eval(self, opt, scope):
+        left = self.left.eval(opt, scope)
+        right = self.right.eval(opt, scope)
 
         if not isinstance(left, type(right)):
             if isinstance(left, int) and isinstance(right, float):
@@ -276,11 +294,15 @@ class If(Node):
         self.cond = cond
         self.block = block
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         scope.push()
         value = None
-        if self.cond.eval(scope):
-            value = self.block.eval(scope)
+        if opt:
+            self.cond.eval(opt, scope)
+            self.block.eval(opt, scope)
+        else:
+            if self.cond.eval(opt, scope):
+                value = self.block.eval(opt, scope)
         scope.pop()
         return value
 
@@ -297,13 +319,18 @@ class IfElse(Node):
         self.true_block = true_block
         self.false_block = false_block
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         scope.push()
         value = None
-        if self.cond.eval(scope):
-            value = self.true_block.eval(scope)
+        if opt:
+            self.cond.eval(opt, scope)
+            self.true_block.eval(opt, scope)
+            self.false_block.eval(opt, scope)
         else:
-            value = self.false_block.eval(scope)
+            if self.cond.eval(opt, scope):
+                value = self.true_block.eval(opt, scope)
+            else:
+                value = self.false_block.eval(opt, scope)
         scope.pop()
         return value
 
@@ -320,11 +347,15 @@ class While(Node):
         self.cond = cond
         self.block = block
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         scope.push()
         value = None
-        while self.cond.eval(scope):
-            value = self.block.eval(scope)
+        if opt:
+            self.cond.eval(opt, scope)
+            self.block.eval(opt, scope)
+        else:
+            while self.cond.eval(opt, scope):
+                value = self.block.eval(opt, scope)
         scope.pop()
         return value
 
@@ -342,13 +373,18 @@ class For(Node):
         self.step = step
         self.block = block
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         scope.push()
-        self.begin.eval(scope)
+        self.begin.eval(opt, scope)
         value = None
-        while self.cond.eval(scope):
-            value = self.block.eval(scope)
-            self.step.eval(scope)
+        if opt:
+            self.cond.eval(opt, scope)
+            self.block.eval(opt, scope)
+            self.step.eval(opt, scope)
+        else:
+            while self.cond.eval(opt, scope):
+                value = self.block.eval(opt, scope)
+                self.step.eval(opt, scope)
         scope.pop()
         return value
 
@@ -365,8 +401,8 @@ class Minus(Node):
     def __init__(self, value):
         self.value = value
 
-    def eval(self, scope):
-        value = self.value.eval(scope)
+    def eval(self, opt, scope):
+        value = self.value.eval(opt, scope)
         if not isinstance(value, int) and not isinstance(value, float):
             type = value.__class__.__name__
             raise ValueError(f"Cannot negate {type}")
@@ -382,8 +418,8 @@ class Not(Node):
     def __init__(self, value):
         self.value = value
 
-    def eval(self, scope):
-        value = self.value.eval(scope)
+    def eval(self, opt, scope):
+        value = self.value.eval(opt, scope)
         if not isinstance(value, bool):
             type = value.__class__.__name__
             raise ValueError(f"Cannot negate {type}")
@@ -400,9 +436,9 @@ class Cast(Node):
         self.type = type
         self.value = value
 
-    def eval(self, scope):
-        cast = self.type.eval(scope)
-        return cast(self.value.eval(scope))
+    def eval(self, opt, scope):
+        cast = self.type.eval(opt, scope)
+        return cast(self.value.eval(opt, scope))
 
     def draw(self, g):
         g.node(self.id(), "Cast")
@@ -415,10 +451,10 @@ class Args(Node):
     def __init__(self, args):
         self.args = args
 
-    def eval(self, scope):
+    def eval(self, opt, scope):
         args = []
         for a in self.args:
-            args.append(a.eval(scope))
+            args.append(a.eval(opt, scope))
         return args
 
     def draw(self, g):
@@ -433,10 +469,10 @@ class Call(Node):
         self.symbol = symbol
         self.args = args
 
-    def eval(self, scope):
-        evaled = self.args.eval(scope)
+    def eval(self, opt, scope):
+        evaled = self.args.eval(opt, scope)
         fn = scope.get(self.symbol)
-        types = fn.args.eval(scope)
+        types = fn.args.eval(opt, scope)
         if len(evaled) != len(types):
             raise ValueError(f"Invalid number of arguments passed to '{self.symbol}'")
 
@@ -444,9 +480,9 @@ class Call(Node):
         for i in range(len(types)):
             value = evaled[i]
             name, expected_type = types[i]
-            expected_type = expected_type.eval(scope)
+            expected_type = expected_type.eval(opt, scope)
             args[name] = expected_type(value)
-        return fn.block.eval(fn.scope, args)
+        return fn.block.eval(opt, fn.scope, args)
 
     def draw(self, g):
         g.node(self.id(), "Call: " + self.symbol)

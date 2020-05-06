@@ -1,0 +1,30 @@
+fn unused1() {
+    println("Hello!")
+}
+
+unused2 := "Unused variable"
+
+a := 10
+b := a + 1
+
+println(b)
+
+fn function() {
+    fn unused1() {
+        println("World")
+    }
+
+    println("Hello")
+}
+
+function()
+
+{
+    {
+        {
+            a := 10
+            b := 21
+            println(b)
+        }
+    }
+}
