@@ -21,7 +21,7 @@ class Program(Node):
         return self.id()
 
 
-class BlockScoped(Node):
+class Block(Node):
     def __init__(self, block):
         self.block = block
 
@@ -31,31 +31,17 @@ class BlockScoped(Node):
         scope.push()
         for name, value in args.items():
             scope.add(name, value)
-        value = self.block.eval(scope)
+        value = None
+        for stmt in self.block:
+            value = stmt.eval(scope)
         scope.pop()
         return value
 
     def draw(self, g):
-        g.node(self.id(), "BlockScoped")
-        if self.block is not None:
-            g.edge(self.id(), self.block.draw(g))
-        return self.id()
-
-
-class Block(Node):
-    def __init__(self, block):
-        self.block = block
-
-    def eval(self, scope):
-        value = None
-        for stmt in self.block:
-            value = stmt.eval(scope)
-        return value
-
-    def draw(self, g):
         g.node(self.id(), "Block")
-        for stmt in self.block:
-            g.edge(self.id(), stmt.draw(g))
+        if self.block:
+            for stmt in self.block:
+                g.edge(self.id(), stmt.draw(g))
         return self.id()
 
 
@@ -80,7 +66,7 @@ class Fn(Node):
         self.scope = Scope()
 
     def eval(self, scope):
-        self.scope.symbols_stack = scope.symbols_stack.copy()
+        self.scope.symbols_stack = scope.symbols_stack[:]
         scope.add(self.symbol, self)
 
     def draw(self, g):
@@ -459,8 +445,7 @@ class Call(Node):
             value = evaled[i]
             name, expected_type = types[i]
             expected_type = expected_type.eval(scope)
-            args[name] = expected_type(value
-)
+            args[name] = expected_type(value)
         return fn.block.eval(fn.scope, args)
 
     def draw(self, g):

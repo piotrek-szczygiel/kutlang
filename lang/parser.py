@@ -36,11 +36,11 @@ class Parser:
 
         @pg.production("scope : LBRACE block RBRACE")
         def scope(p):
-            return ast.BlockScoped(p[1])
+            return ast.Block(p[1].block)
 
         @pg.production("scope : LBRACE RBRACE")
         def scope_empty(p):
-            return ast.BlockScoped(None)
+            return ast.Block(None)
 
         @pg.production("block : block stmt")
         def block(p):

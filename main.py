@@ -17,14 +17,13 @@ def execute(scope, source, draw=False):
     try:
         tokens = lexer.lex(source)
         ast = parser.parse(tokens)
-        value = ast.eval(scope)
 
         if draw:
             g = Digraph()
             ast.draw(g)
             g.render("ast", format="png", view=True, cleanup=True)
 
-        return value
+        return ast.eval(scope)
     except ValueError as err:
         print(err)
     except LexingError as err:
