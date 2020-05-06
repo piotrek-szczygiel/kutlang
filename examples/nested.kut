@@ -1,0 +1,10 @@
+fn world() {
+    println("world!")
+}
+
+fn hello() {
+    print("Hello ")
+    world()
+}
+
+hello()
