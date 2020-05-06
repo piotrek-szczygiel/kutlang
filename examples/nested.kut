@@ -8,3 +8,17 @@ fn hello() {
 }
 
 hello()
+
+fn function() {
+    a := 2
+    fn nested() {
+        println(a)
+        a = a ^ 3
+    }
+
+    for i := 0; i < 5; i = i + 1 {
+        nested()
+    }
+}
+
+function()

@@ -77,9 +77,11 @@ class Fn(Node):
         self.symbol = symbol
         self.args = args
         self.block = block
+        self.scope = Scope()
 
     def eval(self, scope):
-        scope.add(self.symbol, (self.args, self.block))
+        self.scope.symbols_stack = scope.symbols_stack.copy()
+        scope.add(self.symbol, self)
 
     def draw(self, g):
         g.node(self.id(), "Define Fn: " + self.symbol)
@@ -447,8 +449,8 @@ class Call(Node):
 
     def eval(self, scope):
         evaled = self.args.eval(scope)
-        types, fn = scope.get(self.symbol)
-        types = types.eval(scope)
+        fn = scope.get(self.symbol)
+        types = fn.args.eval(scope)
         if len(evaled) != len(types):
             raise ValueError(f"Invalid number of arguments passed to '{self.symbol}'")
 
@@ -457,9 +459,9 @@ class Call(Node):
             value = evaled[i]
             name, expected_type = types[i]
             expected_type = expected_type.eval(scope)
-            args[name] = expected_type(value)
-
-        return fn.eval(scope.globals(), args)
+            args[name] = expected_type(value
+)
+        return fn.block.eval(fn.scope, args)
 
     def draw(self, g):
         g.node(self.id(), "Call: " + self.symbol)
