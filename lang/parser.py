@@ -126,10 +126,6 @@ class Parser:
         def expr_for(p):
             return ast.For(p[1], p[3], p[5], p[6])
 
-        @pg.production("expr : MINUS expr")
-        def expr_minus(p):
-            return ast.Minus(p[1])
-
         @pg.production("expr : NOT expr")
         def expr_not(p):
             return ast.Not(p[1])
@@ -197,15 +193,32 @@ class Parser:
 
             # Mathematical identities optimziation
             if op == "ADD":
-                if is_number(left) and left.value == 0:
+                if is_number(left) and left.value == 0:  # 0 + x = x
                     return right
-                elif is_number(right) and right.value == 0:
+                elif is_number(right) and right.value == 0:  # x + 0 = x
                     return left
             elif op == "SUB":
-                if is_number(left) and left.value == 0:
-                    return ast.Not(right)
-                elif is_number(right) and right.value == 0:
+                if is_number(left) and left.value == 0:  # 0 - x = -x
+                    return ast.Minus(right)
+                elif is_number(right) and right.value == 0:  # x - 0 = x
                     return left
+            elif op == "MUL":
+                if is_number(left) and left.value == 1:  # 1 * x = x
+                    return right
+                elif is_number(left) and left.value == 2:  # 2 * x = x + x
+                    return ast.BinaryOp(operator.add, right, right)
+                elif is_number(right) and right.value == 1:  # x * 1 = x
+                    return left
+                elif is_number(right) and right.value == 2:  # x * 2 = x + x
+                    return ast.BinaryOp(operator.add, left, left)
+            elif op == "DIV":
+                if is_number(right) and right.value == 1:  # x / 1 = x
+                    return left
+                elif is_number(right) and right.value == 2:  # x / 2 = x * 0.5
+                    return ast.BinaryOp(operator.mul, left, ast.ValueFloat(0.5))
+            elif op == "POW":
+                if is_number(right) and right.value == 2:  # x ^ 2 = x * x
+                    return ast.BinaryOp(operator.mul, left, left)
 
             methods = {
                 "ADD": operator.add,

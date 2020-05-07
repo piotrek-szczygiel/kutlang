@@ -29,7 +29,6 @@ class Lexer:
             ("SC", r";"),
             ("COLON", r":"),
             ("ASSIGN", r"="),
-            ("MINUS", r"-"),
             ("NOT", r"!"),
             ("AND", r"&&"),
             ("OR", r"\|\|"),

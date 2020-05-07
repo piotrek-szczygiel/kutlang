@@ -1,0 +1,23 @@
+a := 10
+b := a + 0
+c := 0 - a
+d := a * 1
+e := a / 1
+f := a ^ 2
+g := 2 * a
+h := a / 2
+
+fn show(name: str, value: int) {
+    println(name + " = " + cast(str, value))
+}
+
+{
+    show("a", a)
+    show("b", b)
+    show("c", c)
+    show("d", d)
+    show("e", e)
+    show("f", f)
+    show("g", g)
+    show("h", h)
+}

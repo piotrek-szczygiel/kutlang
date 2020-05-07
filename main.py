@@ -20,14 +20,15 @@ def execute(scope, source, draw=False):
 
         # Optimize
         ast.eval(True, scope)
+        result = ast.eval(False, scope)
 
+        # Draw AST graph
         if draw:
             g = Digraph()
             ast.draw(g)
             g.render("ast", format="png", view=True, cleanup=True)
 
-        # Evaluate
-        return ast.eval(False, scope)
+        return result
     except ValueError as err:
         print(err)
     except LexingError as err:
