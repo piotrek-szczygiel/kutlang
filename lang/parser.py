@@ -189,7 +189,23 @@ class Parser:
         @pg.production("expr : expr OR expr")
         def expr_binop(p):
             left = p[0]
+            op = p[1].gettokentype()
             right = p[2]
+
+            def is_number(x):
+                return isinstance(x, ast.ValueInt) or isinstance(x, ast.ValueFloat)
+
+            # Mathematical identities optimziation
+            if op == "ADD":
+                if is_number(left) and left.value == 0:
+                    return right
+                elif is_number(right) and right.value == 0:
+                    return left
+            elif op == "SUB":
+                if is_number(left) and left.value == 0:
+                    return ast.Not(right)
+                elif is_number(right) and right.value == 0:
+                    return left
 
             methods = {
                 "ADD": operator.add,
@@ -208,7 +224,6 @@ class Parser:
                 "OR": operator.or_,
             }
 
-            op = p[1].gettokentype()
             assert op in methods
             return ast.BinaryOp(methods[op], left, right)
 
