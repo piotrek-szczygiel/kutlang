@@ -1,0 +1,7 @@
+3_7.kut
+Sprawdzanie syntaktyczne instrukcji.
+Test przechodzi pozytywnie.
+###
+5 := 15
+###
+Parsing error

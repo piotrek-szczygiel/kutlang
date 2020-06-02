@@ -1,0 +1,12 @@
+3_6.kut
+Sprawdzanie syntaktyczne deklaracji zmiennych.
+Test przechodzi pozytywnie.
+###
+a := 10 + 5
+println(a)
+
+a := 15 + 5
+println(a)
+###
+15
+Identifier 'a' is already defined

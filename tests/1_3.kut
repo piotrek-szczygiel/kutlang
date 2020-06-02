@@ -1,0 +1,26 @@
+1_3.kut
+Obsługa tokenów dla operatora potęgowania, itd.
+Test przechodzi pozytywnie.
+###
+println(1 + .5 ^ 10 + 10 * 10 / .2 - 18)
+###
+LEXER OUTPUT
+Token('PRINTLN', 'println')
+Token('LPAREN', '(')
+Token('VALUE_INT', '1')
+Token('ADD', '+')
+Token('VALUE_FLOAT', '.5')
+Token('POW', '^')
+Token('VALUE_INT', '10')
+Token('ADD', '+')
+Token('VALUE_INT', '10')
+Token('MUL', '*')
+Token('VALUE_INT', '10')
+Token('DIV', '/')
+Token('VALUE_FLOAT', '.2')
+Token('SUB', '-')
+Token('VALUE_INT', '18')
+Token('RPAREN', ')')
+
+PROGRAM OUTPUT
+483.0009765625

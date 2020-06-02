@@ -3,6 +3,9 @@
 - `pip install rply graphviz`
 - [Graphviz](https://graphviz.gitlab.io/download/) executable in PATH
 
+If you want to run tests install also colorama for colorful terminal output.
+- `pip install colorama`
+
 ## Running REPL
 
 ```bash
@@ -35,6 +38,16 @@ Hello World!
 377
 610
 987
+```
+
+## Running tests
+
+```bash
+$ python test.py
+tests\1_1.kut...........................PASS
+tests\1_2.kut...........................PASS
+tests\1_3.kut...........................PASS
+...
 ```
 
 ## Drawing the AST

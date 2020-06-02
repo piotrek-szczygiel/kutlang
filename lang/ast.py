@@ -1,4 +1,5 @@
 import operator
+import math
 
 from lang.scope import Scope
 
@@ -470,7 +471,13 @@ class Call(Node):
         self.args = args
 
     def eval(self, opt, scope):
+        builtin = {"sin": math.sin, "cos": math.cos, "pi": lambda: math.pi}
+
         evaled = self.args.eval(opt, scope)
+
+        if self.symbol in builtin:
+            return builtin[self.symbol](*evaled)
+
         fn = scope.get(self.symbol)
         types = fn.args.eval(opt, scope)
         if len(evaled) != len(types):
@@ -481,7 +488,12 @@ class Call(Node):
             value = evaled[i]
             name, expected_type = types[i]
             expected_type = expected_type.eval(opt, scope)
-            args[name] = expected_type(value)
+            try:
+                args[name] = expected_type(value)
+            except ValueError:
+                raise ValueError(
+                    f"Cannot convert '{value}' to {str(expected_type.__name__)}"
+                )
         return fn.block.eval(opt, fn.scope, args)
 
     def draw(self, g):

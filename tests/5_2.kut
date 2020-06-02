@@ -1,0 +1,16 @@
+5_2.kut
+Pomijanie zbędnych instrukcji.
+Test przechodzi pozytywnie.
+###
+unused_variable := 5
+
+fn unused_function() {
+    println("This function is never called")
+}
+
+println("Hello world!")
+###
+OPTIMIZE
+
+Removing 2 unused definitions
+Hello world!

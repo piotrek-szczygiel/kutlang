@@ -1,0 +1,27 @@
+4_2.kut
+Definiowanie bloków instrukcji.
+Test przechodzi pozytywnie.
+###
+a := "hello"
+
+println(a)
+
+{
+    a := "shadowed"
+    println(a)
+}
+
+println(a)
+
+b := {
+    for a := 0; a <= 5; a = a + 1 {
+        a ^ 3
+    }
+}
+
+println(b)
+###
+hello
+shadowed
+hello
+125

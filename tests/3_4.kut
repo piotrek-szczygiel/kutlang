@@ -1,0 +1,9 @@
+3_4.kut
+Instrukcja przypisania.
+Test przechodzi pozytywnie.
+###
+a := 10 * 3 + .4
+b := 100
+println(a + b)
+###
+130.4

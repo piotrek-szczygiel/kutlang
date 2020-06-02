@@ -1,0 +1,12 @@
+3_8.kut
+Konwersja typów za pomocą dodatkowego operatora.
+Test przechodzi pozytywnie.
+###
+a := "10"
+println(10 + cast(int, a))
+
+b := 100
+println("b = " + cast(str, b))
+###
+20
+b = 100

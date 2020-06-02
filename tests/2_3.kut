@@ -1,0 +1,9 @@
+2_3.kut
+Kontynuacja parsowania kolejnych instrukcji w przypadku błędu.
+Test przechodzi pozytywnie.
+###
+print("Hello")
+!@#$%^&*
+println(" world!")
+###
+Lexing error

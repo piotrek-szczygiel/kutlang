@@ -1,0 +1,16 @@
+5_1.kut
+Zagnieżdżone wywołania funkcji.
+Test przechodzi pozytywnie.
+###
+fn inner() {
+    println("world!")
+}
+
+fn outer() {
+    print("Hello ")
+    inner()
+}
+
+outer()
+###
+Hello world!

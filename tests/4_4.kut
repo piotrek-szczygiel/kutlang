@@ -1,0 +1,11 @@
+4_4.kut
+Instrukcja wywołania funkcji.
+Test przechodzi pozytywnie.
+###
+fn hello(name: str) {
+    println("Hello " + name + "!")
+}
+
+hello("world")
+###
+Hello world!

@@ -1,0 +1,34 @@
+4_1.kut
+Definiowanie funkcji.
+Test przechodzi pozytywnie.
+###
+fn fib() {
+    a := 1
+    b := 0
+
+    for i := 0; i < 15; i = i + 1 {
+        temp := a
+        a = a + b
+        b = temp
+
+        println(a)
+    }
+}
+
+fib()
+###
+1
+2
+3
+5
+8
+13
+21
+34
+55
+89
+144
+233
+377
+610
+987

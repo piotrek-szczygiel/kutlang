@@ -1,0 +1,22 @@
+1_1.kut
+Obsługa tokenów dla liczb całkowitych i rzeczywistych.
+Test przechodzi pozytywnie.
+###
+println(1 + 2 * 3.5 / .5 ^ 10.)
+###
+LEXER OUTPUT
+Token('PRINTLN', 'println')
+Token('LPAREN', '(')
+Token('VALUE_INT', '1')
+Token('ADD', '+')
+Token('VALUE_INT', '2')
+Token('MUL', '*')
+Token('VALUE_FLOAT', '3.5')
+Token('DIV', '/')
+Token('VALUE_FLOAT', '.5')
+Token('POW', '^')
+Token('VALUE_FLOAT', '10.')
+Token('RPAREN', ')')
+
+PROGRAM OUTPUT
+7169.0

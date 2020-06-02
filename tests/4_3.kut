@@ -1,0 +1,29 @@
+4_3.kut
+Definiowanie zmiennych globalnych i lokalnych.
+Test przechodzi pozytywnie.
+###
+global := "global"
+
+fn test_global() {
+    println("I can access global variables from anywhere: " + global)
+}
+
+test_global()
+
+if true {
+    a := 230
+    println(a)
+
+    if !false {
+        println("Still can access a: " + cast(str, a))
+
+        b := 17
+    }
+}
+
+println(a)
+###
+I can access global variables from anywhere: global
+230
+Still can access a: 230
+Undefined identifier 'a'

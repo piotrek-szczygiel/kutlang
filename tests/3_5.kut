@@ -1,0 +1,11 @@
+3_5.kut
+Przeciążanie operatorów.
+Testy przechodzą pozytywnie.
+###
+println(10 + 10)
+println("10" + "10")
+println("Hello " + "world!")
+###
+20
+1010
+Hello world!

@@ -1,0 +1,30 @@
+1_2.kut
+Obsługa tokenów dla funkcji specjalnych sin, cos itd.
+Test przechodzi pozytywnie.
+###
+println(1 + sin(pi() / 2) + cos(pi()))
+###
+LEXER OUTPUT
+Token('PRINTLN', 'println')
+Token('LPAREN', '(')
+Token('VALUE_INT', '1')
+Token('ADD', '+')
+Token('SYMBOL', 'sin')
+Token('LPAREN', '(')
+Token('SYMBOL', 'pi')
+Token('LPAREN', '(')
+Token('RPAREN', ')')
+Token('DIV', '/')
+Token('VALUE_INT', '2')
+Token('RPAREN', ')')
+Token('ADD', '+')
+Token('SYMBOL', 'cos')
+Token('LPAREN', '(')
+Token('SYMBOL', 'pi')
+Token('LPAREN', '(')
+Token('RPAREN', ')')
+Token('RPAREN', ')')
+Token('RPAREN', ')')
+
+PROGRAM OUTPUT
+1.0

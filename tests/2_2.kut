@@ -1,0 +1,9 @@
+2_2.kut
+Implementacja instrukcji oddzielonych średnikiem.
+W przypadku mojego języka nie używam średnika do oddzielania instrukcji z zachowaniem funkcjonalności.
+Test przechodzi pozytywnie.
+###
+print("Hello")
+println(" world!")
+###
+Hello world!

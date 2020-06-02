@@ -1,5 +1,6 @@
 import argparse
 import sys
+import copy
 
 from graphviz import Digraph
 from rply import LexingError, ParsingError
@@ -13,13 +14,23 @@ parser = Parser(lexer.tokens)
 scope = Scope()
 
 
-def execute(scope, source, draw=False):
+def execute(scope, source, draw=False, lexer_output=False, opt=False):
     try:
         tokens = lexer.lex(source)
+
+        if lexer_output:
+            print("LEXER OUTPUT")
+            for token in copy.copy(tokens):
+                print(token)
+            print()
+            print("PROGRAM OUTPUT")
+
         ast = parser.parse(tokens)
 
         # Optimize
-        ast.eval(True, scope)
+        if opt:
+            ast.eval(True, scope)
+
         result = ast.eval(False, scope)
 
         # Draw AST graph
@@ -31,29 +42,27 @@ def execute(scope, source, draw=False):
         return result
     except ValueError as err:
         print(err)
-    except LexingError as err:
-        pos = err.getsourcepos()
-        print(f"{pos.lineno}:{pos.colno} Lexing error")
-    except ParsingError as err:
-        pos = err.getsourcepos()
-        print(f"{pos.lineno}:{pos.colno} Parsing error")
+    except LexingError:
+        print("Lexing error")
+    except ParsingError:
+        print("Parsing error")
 
 
-def run_repl(draw=False):
+def run_repl():
     while True:
         try:
             source = input("> ")
-            result = execute(scope, source, draw)
+            result = execute(scope, source)
             if result is not None:
                 print(result)
         except KeyboardInterrupt:
             break
 
 
-def run_file(path, draw):
+def run_file(path, draw=False, verbose=False):
     with open(path, "r") as f:
         source = f.read()
-        execute(scope, source, draw)
+        execute(scope, source, draw=draw, verbose=verbose)
 
 
 if __name__ == "__main__":
@@ -62,9 +71,12 @@ if __name__ == "__main__":
     arg_parser.add_argument(
         "-a", "--ast", help="draw abstract syntax tree", action="store_true"
     )
+    arg_parser.add_argument(
+        "-l", "--lexer", help="print lexer output", action="store_true"
+    )
     args = arg_parser.parse_args()
 
     if args.file:
-        run_file(args.file, args.ast)
+        run_file(args.file, draw=args.ast, verbose=args.lexer)
     else:
-        run_repl(args.ast)
+        run_repl()

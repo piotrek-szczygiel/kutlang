@@ -1,0 +1,17 @@
+4_5.kut
+Automatyczna konwersja typów.
+Test przechodzi pozytywnie.
+###
+fn add_strings(a: str, b: str) {
+    a + b
+}
+
+fn add_numbers(a: int, b: int) {
+    a + b
+}
+
+println(add_strings("10", 10))
+println(add_numbers(10.7, "10"))
+###
+1010
+20

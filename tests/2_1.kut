@@ -1,0 +1,15 @@
+2_1.kut
+Implementacja działan potęgowania, funkcji specjalnych, działań relacyjnych, zmiany znaku.
+Test przechodzi pozytywnie.
+###
+println(5 ^ 2)
+println("sin(pi/2) = " + cast(str, sin(pi() / 2)))
+println(20 > (sin(0.0) + 19))
+println(20 > (sin(0.0) + 21))
+println(0 - cos(0))
+###
+25
+sin(pi/2) = 1.0
+True
+False
+-1.0
