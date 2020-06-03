@@ -35,7 +35,8 @@ class Block(Node):
         value = None
         for stmt in self.block:
             value = stmt.eval(opt, scope)
-        symbols = scope.pop()
+        scope.pop()
+        symbols = scope.last_pop
 
         if opt:
             unused = []

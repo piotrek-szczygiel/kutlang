@@ -27,7 +27,8 @@ class Symbols:
 
 class Scope:
     def __init__(self):
-        self.symbols_stack = [Symbols()]
+        self.symbols_stack = []
+        self.last_pop = None
 
     def add(self, name, value):
         if self.symbols_stack[0].contains(name):
@@ -55,4 +56,4 @@ class Scope:
         self.symbols_stack.insert(0, Symbols())
 
     def pop(self):
-        return self.symbols_stack.pop(0)
+        self.last_pop = self.symbols_stack.pop(0)

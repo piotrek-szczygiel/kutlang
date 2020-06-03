@@ -11,7 +11,6 @@ from lang.scope import Scope
 
 lexer = Lexer()
 parser = Parser(lexer.tokens)
-scope = Scope()
 
 
 def execute(scope, source, draw=False, lexer_output=False, opt=False):
@@ -49,17 +48,21 @@ def execute(scope, source, draw=False, lexer_output=False, opt=False):
 
 
 def run_repl():
+    scope = Scope()
     while True:
         try:
             source = input("> ")
             result = execute(scope, source)
             if result is not None:
                 print(result)
+            if scope.last_pop is not None:
+                scope.symbols_stack.insert(0, scope.last_pop)
         except KeyboardInterrupt:
             break
 
 
 def run_file(path, draw=False, verbose=False):
+    scope = Scope()
     with open(path, "r") as f:
         source = f.read()
         execute(scope, source, draw=draw, verbose=verbose)
