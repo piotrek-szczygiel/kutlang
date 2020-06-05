@@ -1,14 +1,16 @@
-N := 20
+fn fizzbuzz(n: int) {
+    for i := 1; i <= n; i = i + 1 {
+        value := ""
 
-for i := 1; i <= N; i = i + 1 {
-    value := ""
+        if i % 3 == 0 { value = value + "Fizz" }
+        if i % 5 == 0 { value = value + "Buzz" }
 
-    if i % 3 == 0 { value = value + "Fizz" }
-    if i % 5 == 0 { value = value + "Buzz" }
-
-    if value {
-        println(value)
-    } else {
-        println(i)
+        if value {
+            println(value)
+        } else {
+            println(i)
+        }
     }
 }
+
+fizzbuzz(15)

@@ -1,6 +1,5 @@
 fn sqr(x: int) { x ^ 2 }
 fn pow(x: int, n: int) { x ^ n }
-fn pi() { 3.1415926 }
 
 fn hello(name: str) {
     println("Hello " + name + "!")
