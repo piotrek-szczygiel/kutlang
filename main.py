@@ -61,11 +61,11 @@ def run_repl():
             break
 
 
-def run_file(path, draw=False, verbose=False):
+def run_file(path, draw=False, lexer_output=False):
     scope = Scope()
     with open(path, "r") as f:
         source = f.read()
-        execute(scope, source, draw=draw, verbose=verbose)
+        execute(scope, source, draw=draw, lexer_output=lexer_output)
 
 
 if __name__ == "__main__":
@@ -80,6 +80,6 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
 
     if args.file:
-        run_file(args.file, draw=args.ast, verbose=args.lexer)
+        run_file(args.file, draw=args.ast, lexer_output=args.lexer)
     else:
         run_repl()
